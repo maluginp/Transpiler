@@ -276,7 +276,7 @@ class Convertor {
             is Node.Expr.Call -> {
                 var text = declareExpr(expr.expr)
 
-                if (expr.args.size > 0) {
+                if (expr.args.isNotEmpty()) {
                     text += "("
                     text += expr.args
                         .map { declareValueArg(it) }
@@ -322,9 +322,7 @@ class Convertor {
         var text = ""
 
         text += declareExpr(decl.expr)
-        if (decl.name != null) {
-            text += " ${decl.name}"
-        }
+        text += decl.name?.let { " $it" } ?: ""
         return text
     }
 
@@ -342,10 +340,9 @@ class Convertor {
             "${declareTypeRef(it?.type?.ref)} ${it?.name}"
         }.joinToString(separator = "")  { it }
 
-        if (decl.expr != null) {
-            text += " = "
-            text += declareExpr(decl.expr)
-        }
+        text += decl.expr?.let {
+            " = ${declareExpr(decl.expr)}"
+        } ?: ""
 
         text += "\n"
 
@@ -358,9 +355,9 @@ class Convertor {
             is Node.TypeRef.Func -> TODO()
             is Node.TypeRef.Simple -> {
                 return ref.pieces.map {
-                    var text = "${it.name}"
+                    var text = it.name
 
-                    if (it.typeParams.size > 0) {
+                    if (it.typeParams.isNotEmpty()) {
                         text += "<"
 
                         text += it.typeParams
@@ -387,7 +384,7 @@ class Convertor {
             Form.INTERFACE -> {
                 declareText += "protocol ${decl.name}"
 
-                if (decl.parents.size > 0) {
+                if (decl.parents.isNotEmpty()) {
                     declareText += ": "
                     declareText += decl.parents.map { declareParent(it) }
                         .joinToString(separator = ",") { it }
@@ -398,7 +395,7 @@ class Convertor {
             Form.CLASS -> {
                 declareText += "class ${decl.name}"
 
-                if (decl.parents.size > 0) {
+                if (decl.parents.isNotEmpty()) {
                     declareText += ": "
                     declareText += decl.parents.map { declareParent(it) }
                         .joinToString(separator = ",") { it }
