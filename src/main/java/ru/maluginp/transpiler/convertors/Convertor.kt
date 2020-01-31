@@ -3,7 +3,6 @@ package ru.maluginp.transpiler.convertors
 import kastree.ast.Node
 import kastree.ast.Node.Decl.Structured.*
 import kastree.ast.Node.Modifier.Keyword.*
-import kotlin.math.exp
 
 class Convertor {
     var output: String = ""
@@ -112,7 +111,7 @@ class Convertor {
 
             ident--
 
-            declareText += "\n${getIdent()}}"
+            declareText += "\n${withIdent("")}}"
         }
 
         declareText += "\n"
@@ -298,7 +297,7 @@ class Convertor {
                 is Node.Stmt.Decl -> declare(it.decl)
                 is Node.Stmt.Expr -> declareExpr(it.expr)
             }
-        }.joinToString(separator = "")  { "${getIdent()}$it" }
+        }.joinToString(separator = "")  { withIdent(it) }
     }
 
     private fun declareProperty(decl: Node.Decl.Property): String {
@@ -378,7 +377,7 @@ class Convertor {
         ident++
         declareText += decl.members
             .map {declare(it)}
-            .joinToString(separator = "") { "${getIdent()} $it" }
+            .joinToString(separator = "") { withIdent(it) }
 
         declareText += "}\n"
         ident--
@@ -393,8 +392,8 @@ class Convertor {
         }
     }
 
-    private fun getIdent(): String {
-        return " ".repeat(ident * 2)
+    private fun withIdent(str: String): String {
+        return "${" ".repeat(ident * 2)}$str"
     }
 
 }
