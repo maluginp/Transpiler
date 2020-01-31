@@ -1,5 +1,7 @@
 package ru.maluginp.transpiler
 
+import ru.maluginp.transpiler.Parser
+
 interface ICartItem {
 
     val amount: String

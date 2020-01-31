@@ -11,7 +11,22 @@ class Convertor {
     var ident = 0
 
     fun file(file: Node.File) {
-        output = file.decls.map {
+        output = ""
+
+
+        output += file.pkg?.let { pkg -> "package " + pkg.names
+            .map { it }
+            .joinToString(separator = ".") { it } + "\n"
+        } ?: ""
+
+        output += file.imports.map { import -> "import " + import.names
+            .map { it }
+            .joinToString(separator = ".") { it }
+        }.joinToString(separator = "\n") { it }
+
+        output += "\n"
+
+        output += file.decls.map {
             declare(it)
         }.joinToString(separator = "")  { it }
     }
