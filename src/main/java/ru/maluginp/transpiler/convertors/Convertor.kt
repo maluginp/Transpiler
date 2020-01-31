@@ -2,16 +2,19 @@ package ru.maluginp.transpiler.convertors
 
 import kastree.ast.Node
 import kastree.ast.Node.Decl.Structured.*
+import kastree.ast.Node.Modifier.Keyword.*
 import kotlin.math.exp
 
 class Convertor {
     var output: String = ""
         private set
 
+    var ident = 0
+
     fun file(file: Node.File) {
         output = file.decls.map {
             declare(it)
-        }.joinToString { it }
+        }.joinToString(separator = "")  { it }
     }
 
     fun declare(decl: Node.Decl): String {
@@ -46,23 +49,70 @@ class Convertor {
         return declareText//To change body of created functions use File | Settings | File Templates.
     }
 
+    private fun declareModifier(decl: Node.Modifier): String {
+        return when(decl) {
+            is Node.Modifier.AnnotationSet -> TODO()
+            is Node.Modifier.Lit -> when(decl.keyword) {
+                ABSTRACT -> "abstract"
+                FINAL -> "final"
+                OPEN -> "open"
+                ANNOTATION -> "annotation"
+                SEALED -> "sealed"
+                DATA -> "data"
+                OVERRIDE -> "override"
+                LATEINIT -> TODO()
+                INNER -> TODO()
+                PRIVATE -> "private"
+                PROTECTED -> "protected"
+                PUBLIC -> "public"
+                INTERNAL -> TODO()
+                IN -> TODO()
+                OUT -> TODO()
+                NOINLINE -> TODO()
+                CROSSINLINE -> TODO()
+                VARARG -> TODO()
+                REIFIED -> TODO()
+                TAILREC -> TODO()
+                OPERATOR -> TODO()
+                INFIX -> TODO()
+                INLINE -> TODO()
+                EXTERNAL -> TODO()
+                SUSPEND -> TODO()
+                CONST -> "const"
+                ACTUAL -> TODO()
+                EXPECT -> TODO()
+            }
+        }
+    }
+
     private fun declareFunc(decl: Node.Decl.Func): String {
         var declareText = ""
+
+        if (decl.mods.size > 0) {
+            declareText += decl.mods
+                .map { declareModifier(it) }
+                .joinToString(separator = " ") { it }
+
+            declareText += " "
+        }
 
         declareText += "func ${decl.name}("
 
         declareText += decl.params.map {
             "${declareTypeRef(it.type?.ref)} ${it.name}"
-        }.joinToString(separator = ", ") { it }
+        }.joinToString(separator = "")  { it }
 
         declareText += "): " + declareTypeRef(decl.type?.ref)
 
         if (decl.body != null) {
-            declareText += "{\n"
+            declareText += " {\n"
+            ident++
 
             declareText += declareBody(decl.body)
 
-            declareText += "}"
+            ident--
+
+            declareText += "\n${getIdent()}}"
         }
 
         declareText += "\n"
@@ -152,7 +202,15 @@ class Convertor {
                 return "DoubleColonRef.class"
             }
             is Node.Expr.Paren -> TODO()
-            is Node.Expr.StringTmpl -> TODO()
+            is Node.Expr.StringTmpl -> {
+                return "\"" + expr.elems.map { when(it) {
+                    is Node.Expr.StringTmpl.Elem.Regular -> it.str
+                    is Node.Expr.StringTmpl.Elem.ShortTmpl -> it.str
+                    is Node.Expr.StringTmpl.Elem.UnicodeEsc -> it.digits
+                    is Node.Expr.StringTmpl.Elem.RegularEsc -> "${it.char}"
+                    is Node.Expr.StringTmpl.Elem.LongTmpl -> declareExpr(it.expr)
+                }}.joinToString { it } + "\""
+            }
             is Node.Expr.Const -> {
                 return expr.value
 //                return "const ${expr.form.name} = ${expr.value}"
@@ -180,7 +238,7 @@ class Convertor {
                 return "throw "
             }
             is Node.Expr.Return -> {
-                return "return ${declareExpr(expr.expr!!)}"
+                return "return ${declareExpr(expr.expr)}"
             }
             is Node.Expr.Continue -> {
                 return "continue"
@@ -197,7 +255,16 @@ class Convertor {
             }
             is Node.Expr.Annotated -> TODO()
             is Node.Expr.Call -> {
-                return "Call ${declareExpr(expr.expr)}"
+                var text = declareExpr(expr.expr)
+
+                text += "("
+                if (expr.args.size > 0) {
+                    text += expr.args
+                        .map { declareValueArg(it) }
+                        .joinToString { it }
+                }
+                text += ")"
+                return text
             }
             is Node.Expr.ArrayAccess -> {
                var text = declareExpr(expr.expr)
@@ -215,19 +282,29 @@ class Convertor {
         }
     }
 
+    private fun declareValueArg(decl: Node.ValueArg): String {
+        var text = ""
+
+        text += declareExpr(decl.expr)
+        if (decl.name != null) {
+            text += " ${decl.name}"
+        }
+        return text
+    }
+
     private fun declareBodyBlock(body: Node.Decl.Func.Body.Block): String {
         return body.block.stmts.map {
             when(it) {
                 is Node.Stmt.Decl -> declare(it.decl)
                 is Node.Stmt.Expr -> declareExpr(it.expr)
             }
-        }.joinToString { it }
+        }.joinToString(separator = "")  { "${getIdent()}$it" }
     }
 
     private fun declareProperty(decl: Node.Decl.Property): String {
         return decl.vars.map {
             "${declareTypeRef(it?.type?.ref)} ${it?.name}"
-        }.joinToString { "$it\n" }
+        }.joinToString(separator = "")  { "$it\n" }
     }
 
     private fun declareTypeRef(ref: Node.TypeRef?): String {
@@ -249,12 +326,12 @@ class Convertor {
                     }
 
                     return text
-                }.joinToString { it }
+                }.joinToString(separator = "")  { it }
 
             }
             is Node.TypeRef.Nullable -> TODO()
             is Node.TypeRef.Dynamic -> TODO()
-            null -> ""
+            null -> "null"
         }
     }
 
@@ -271,7 +348,7 @@ class Convertor {
                         .joinToString(separator = ",") { it }
                 }
 
-                declareText += "{\n"
+                declareText += " {\n"
             }
             Form.CLASS -> {
                 declareText += "class ${decl.name}"
@@ -282,7 +359,7 @@ class Convertor {
                         .joinToString(separator = ",") { it }
                 }
 
-                declareText += "{\n"
+                declareText += " {\n"
 
             }
             Form.COMPANION_OBJECT -> {
@@ -298,9 +375,13 @@ class Convertor {
 
         }
 
-        declareText += decl.members.map {declare(it)}.joinToString { "$it\n" }
+        ident++
+        declareText += decl.members
+            .map {declare(it)}
+            .joinToString(separator = "") { "${getIdent()} $it" }
 
-        declareText += "}"
+        declareText += "}\n"
+        ident--
 
         return declareText
     }
@@ -312,5 +393,8 @@ class Convertor {
         }
     }
 
+    private fun getIdent(): String {
+        return " ".repeat(ident * 2)
+    }
 
 }

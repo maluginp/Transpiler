@@ -9,9 +9,20 @@ interface ICartItem {
     fun getPrice(): Double
 }
 
-class Calculator {
-    fun getPrice(item: ICartItem): Double {
-        return 0.0;
+class Calculator: ICartItem {
+    override val amount: String
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+
+    override fun test(a: Int): Int {
+        return getTester(a).toInt()
+    }
+
+    override fun getPrice(): Double {
+        TODO("not implemented" + "asdasd") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    private fun getTester(a: Int): Int {
+        return 1
     }
 }
 
