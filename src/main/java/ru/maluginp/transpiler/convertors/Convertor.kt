@@ -193,7 +193,7 @@ class Convertor {
                 }
 
 
-                return "${declareExpr(expr.lhs)} ${operator} ${declareExpr(expr.rhs)}"
+                return "${declareExpr(expr.lhs)}${operator}${declareExpr(expr.rhs)}"
             }
             is Node.Expr.UnaryOp -> {
                 var operator = expr.oper.token.str
@@ -207,7 +207,7 @@ class Convertor {
             is Node.Expr.TypeOp -> {
                 var operator: String = expr.oper.token.str
 
-                return "${declareExpr(expr.lhs)} ${operator} ${declareTypeRef(expr.rhs.ref)}"
+                return "${declareExpr(expr.lhs)}${operator}${declareTypeRef(expr.rhs.ref)}"
             }
             is Node.Expr.DoubleColonRef.Callable -> {
                 return "DoubleColonRef.Callable ${expr.name}"
@@ -230,8 +230,13 @@ class Convertor {
 //                return "const ${expr.form.name} = ${expr.value}"
             }
             is Node.Expr.Brace -> {
-                return ""
-//                return "brace"
+                var text = " {\n"
+                ident++
+                text += withIdent(declareExprBlock(expr.block))
+                ident--
+
+                text += "\n" + withIdent("}")
+                return text
             }
             is Node.Expr.Brace.Param -> {
                 return "braceparam"
@@ -271,13 +276,20 @@ class Convertor {
             is Node.Expr.Call -> {
                 var text = declareExpr(expr.expr)
 
-                text += "("
                 if (expr.args.size > 0) {
+                    text += "("
                     text += expr.args
                         .map { declareValueArg(it) }
                         .joinToString { it }
+                    text += ")"
+                } else if (expr.lambda == null) {
+                    text += "()"
                 }
-                text += ")"
+
+                text += expr.lambda?.let {
+                    lambda -> declareExpr(lambda.func)
+                } ?: ""
+
                 return text
             }
             is Node.Expr.ArrayAccess -> {
@@ -296,6 +308,16 @@ class Convertor {
         }
     }
 
+    private fun declareExprBlock(block: Node.Block?): String {
+        return block?.let{ block -> block.stmts
+            .map { when(it) {
+                is Node.Stmt.Decl -> declare(it.decl)
+                is Node.Stmt.Expr -> declareExpr(it.expr)
+            }}
+            .joinToString(separator = "\n") { it }
+        } ?: ""
+    }
+
     private fun declareValueArg(decl: Node.ValueArg): String {
         var text = ""
 
@@ -312,13 +334,22 @@ class Convertor {
                 is Node.Stmt.Decl -> declare(it.decl)
                 is Node.Stmt.Expr -> declareExpr(it.expr)
             }
-        }.joinToString(separator = "")  { withIdent(it) }
+        }.joinToString(separator = "\n")  { withIdent(it) }
     }
 
     private fun declareProperty(decl: Node.Decl.Property): String {
-        return decl.vars.map {
+        var text = decl.vars.map {
             "${declareTypeRef(it?.type?.ref)} ${it?.name}"
-        }.joinToString(separator = "")  { "$it\n" }
+        }.joinToString(separator = "")  { it }
+
+        if (decl.expr != null) {
+            text += " = "
+            text += declareExpr(decl.expr)
+        }
+
+        text += "\n"
+
+        return text
     }
 
     private fun declareTypeRef(ref: Node.TypeRef?): String {
