@@ -3,6 +3,7 @@ package ru.maluginp.transpiler.convertors
 import kastree.ast.Node
 import kastree.ast.Node.Decl.Structured.*
 import kastree.ast.Node.Modifier.Keyword.*
+import kotlin.math.exp
 
 class Convertor {
     var output: String = ""
@@ -126,7 +127,7 @@ class Convertor {
 
             ident--
 
-            declareText += "\n${withIdent("")}}"
+            declareText += "\n${withIdent()}}"
         }
 
         declareText += "\n"
@@ -153,34 +154,33 @@ class Convertor {
                 text += declareExpr(expr.expr)
                 text += ")"
 
-                text += "{\n"
-
                 text += declareExpr(expr.body)
 
-                text += "}"
-
                 if (expr.elseBody != null)  {
-                    text += " else {\n"
+                    text += " else "
 
                     text += declareExpr(expr.elseBody)
-
-                    text += "}"
                 }
-
-                text += "\n"
 
                 return text
             }
             is Node.Expr.Try -> TODO()
-            is Node.Expr.For -> TODO()
+            is Node.Expr.For -> {
+                val vars = expr.vars.map {
+                    declarePropertyVar(it)
+                }.joinToString { it }
+                val inExpr = declareExpr(expr.inExpr)
+                var text = "for ($vars in $inExpr)"
+
+                text += declareExpr(expr.body)
+                text
+            }
             is Node.Expr.While -> {
                 var text = "while("
                 text += declareExpr(expr.expr)
                 text += ")"
 
-                text += "{\n"
                 text += declareExpr(expr.body)
-                text += "}\n"
 
                 return text
             }
@@ -215,7 +215,9 @@ class Convertor {
             is Node.Expr.DoubleColonRef.Class -> {
                 return "DoubleColonRef.class"
             }
-            is Node.Expr.Paren -> TODO()
+            is Node.Expr.Paren -> {
+                declareExpr(expr.expr)
+            }
             is Node.Expr.StringTmpl -> {
                 return "\"" + expr.elems.map { when(it) {
                     is Node.Expr.StringTmpl.Elem.Regular -> it.str
@@ -308,13 +310,23 @@ class Convertor {
         }
     }
 
+    private fun declarePropertyVar(decl: Node.Decl.Property.Var?): String {
+        var text = decl?.name ?: ""
+
+        text += decl?.type?.let {
+            ": ${declareTypeRef(it.ref)}"
+        } ?: ""
+
+        return text
+    }
+
     private fun declareExprBlock(block: Node.Block?): String {
         return block?.let{ block -> block.stmts
             .map { when(it) {
                 is Node.Stmt.Decl -> declare(it.decl)
                 is Node.Stmt.Expr -> declareExpr(it.expr)
             }}
-            .joinToString(separator = "\n") { it }
+            .joinToString(separator = "\n${withIdent()}") { it }
         } ?: ""
     }
 
@@ -344,8 +356,6 @@ class Convertor {
             " = ${declareExpr(decl.expr)}"
         } ?: ""
 
-        text += "\n"
-
         return text
     }
 
@@ -371,9 +381,11 @@ class Convertor {
                 }.joinToString(separator = "")  { it }
 
             }
-            is Node.TypeRef.Nullable -> TODO()
+            is Node.TypeRef.Nullable -> {
+                "nullable ${declareTypeRef(ref.type)}"
+            }
             is Node.TypeRef.Dynamic -> TODO()
-            null -> "null"
+            null -> ""
         }
     }
 
@@ -435,7 +447,7 @@ class Convertor {
         }
     }
 
-    private fun withIdent(str: String): String {
+    private fun withIdent(str: String = ""): String {
         return "${" ".repeat(ident * 2)}$str"
     }
 
