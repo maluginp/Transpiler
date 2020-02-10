@@ -5,35 +5,47 @@ import kastree.ast.Node.Decl.Structured.*
 import kastree.ast.Node.Modifier.Keyword.*
 import kotlin.math.exp
 
-class Convertor {
-    var output: String = ""
-        private set
-
+class ASTConvertor(val generator: IGenerator) {
     var ident = 0
 
-    fun file(file: Node.File) {
-        output = ""
+    fun run(file: Node.File): String {
+        var output = ""
 
+        output += file.pkg?.let { pkg ->
+            val packageName = pkg.names
+                .map { it }
+                .joinToString(separator = ".") { it }
 
-        output += file.pkg?.let { pkg -> "package " + pkg.names
-            .map { it }
-            .joinToString(separator = ".") { it } + "\n"
+            wrapIfNotEmpty(generator.formatPackage(packageName))
         } ?: ""
 
-        output += file.imports.map { import -> "import " + import.names
-            .map { it }
-            .joinToString(separator = ".") { it }
-        }.joinToString(separator = "\n") { it }
+        output += file.imports.map { import ->
+            val packageName:String = import.names
+                .map { it }
+                .joinToString(separator = ".") { it }
 
-        output += "\n"
+            wrapIfNotEmpty(generator.formatImport(packageName))
+        }.joinToString(separator = "") { it }
+
+//        output += "\n"
 
         output += file.decls.map {
             declare(it)
-        }.joinToString(separator = "")  { it }
+        }.joinToString(separator = "") { it }
+
+        return output
     }
 
-    fun declare(decl: Node.Decl): String {
-        return when(decl) {
+    private fun wrapIfNotEmpty(text: String, endText: String = "\n"): String {
+        return if (text.isNotEmpty()) {
+            text + endText
+        } else {
+            ""
+        }
+    }
+
+    private fun declare(decl: Node.Decl): String {
+        return when (decl) {
             is Node.Decl.Structured -> declareStructured(decl)
             is Node.Decl.Property -> declareProperty(decl)
             is Node.Decl.Func -> declareFunc(decl)
@@ -59,15 +71,17 @@ class Convertor {
     private fun declareEnum(decl: Node.Decl.EnumEntry): String {
         var declareText = ""
 
-        declareText += "enum ${decl.name}"
+        declareText += generator.formatEnum(decl.name)
 
-        return declareText//To change body of created functions use File | Settings | File Templates.
+        // TODO: Add enum implementation
+
+        return declareText
     }
 
     private fun declareModifier(decl: Node.Modifier): String {
-        return when(decl) {
+        return when (decl) {
             is Node.Modifier.AnnotationSet -> TODO()
-            is Node.Modifier.Lit -> when(decl.keyword) {
+            is Node.Modifier.Lit -> when (decl.keyword) {
                 ABSTRACT -> "abstract"
                 FINAL -> "final"
                 OPEN -> "open"
@@ -115,7 +129,7 @@ class Convertor {
 
         declareText += decl.params.map {
             "${declareTypeRef(it.type?.ref)} ${it.name}"
-        }.joinToString(separator = "")  { it }
+        }.joinToString(separator = "") { it }
 
         declareText += "): " + declareTypeRef(decl.type?.ref)
 
@@ -136,7 +150,7 @@ class Convertor {
     }
 
     private fun declareBody(body: Node.Decl.Func.Body?): String {
-        return when(body) {
+        return when (body) {
             is Node.Decl.Func.Body.Block -> declareBodyBlock(body)
             is Node.Decl.Func.Body.Expr -> declareBodyExpr(body)
             null -> ""
@@ -148,21 +162,14 @@ class Convertor {
     }
 
     private fun declareExpr(expr: Node.Expr?): String {
-        return when(expr) {
+        return when (expr) {
             is Node.Expr.If -> {
-                var text = "if ("
-                text += declareExpr(expr.expr)
-                text += ")"
+                generator.formatIf(
+                    expr = declareExpr(expr.expr),
+                    body = declareExpr(expr.body),
+                    elseBody = expr.elseBody?.let { declareExpr(expr.elseBody) }
 
-                text += declareExpr(expr.body)
-
-                if (expr.elseBody != null)  {
-                    text += " else "
-
-                    text += declareExpr(expr.elseBody)
-                }
-
-                return text
+                )
             }
             is Node.Expr.Try -> TODO()
             is Node.Expr.For -> {
@@ -187,7 +194,7 @@ class Convertor {
             is Node.Expr.BinaryOp -> {
                 var oper = expr.oper
 
-                var operator: String = when(oper) {
+                var operator: String = when (oper) {
                     is Node.Expr.BinaryOp.Oper.Infix -> oper.str
                     is Node.Expr.BinaryOp.Oper.Token -> oper.token.str
                 }
@@ -219,13 +226,15 @@ class Convertor {
                 declareExpr(expr.expr)
             }
             is Node.Expr.StringTmpl -> {
-                return "\"" + expr.elems.map { when(it) {
-                    is Node.Expr.StringTmpl.Elem.Regular -> it.str
-                    is Node.Expr.StringTmpl.Elem.ShortTmpl -> it.str
-                    is Node.Expr.StringTmpl.Elem.UnicodeEsc -> it.digits
-                    is Node.Expr.StringTmpl.Elem.RegularEsc -> "${it.char}"
-                    is Node.Expr.StringTmpl.Elem.LongTmpl -> declareExpr(it.expr)
-                }}.joinToString { it } + "\""
+                return "\"" + expr.elems.map {
+                    when (it) {
+                        is Node.Expr.StringTmpl.Elem.Regular -> it.str
+                        is Node.Expr.StringTmpl.Elem.ShortTmpl -> it.str
+                        is Node.Expr.StringTmpl.Elem.UnicodeEsc -> it.digits
+                        is Node.Expr.StringTmpl.Elem.RegularEsc -> "${it.char}"
+                        is Node.Expr.StringTmpl.Elem.LongTmpl -> declareExpr(it.expr)
+                    }
+                }.joinToString { it } + "\""
             }
             is Node.Expr.Const -> {
                 return expr.value
@@ -288,19 +297,19 @@ class Convertor {
                     text += "()"
                 }
 
-                text += expr.lambda?.let {
-                    lambda -> declareExpr(lambda.func)
+                text += expr.lambda?.let { lambda ->
+                    declareExpr(lambda.func)
                 } ?: ""
 
                 return text
             }
             is Node.Expr.ArrayAccess -> {
-               var text = declareExpr(expr.expr)
+                var text = declareExpr(expr.expr)
                 text += "["
 
                 expr.indices.map { declareExpr(it) }.joinToString(separator = ", ") { it }
                 text += "]"
-               return text
+                return text
             }
             is Node.Expr.AnonFunc -> TODO()
             is Node.Expr.Property -> {
@@ -321,12 +330,15 @@ class Convertor {
     }
 
     private fun declareExprBlock(block: Node.Block?): String {
-        return block?.let{ block -> block.stmts
-            .map { when(it) {
-                is Node.Stmt.Decl -> declare(it.decl)
-                is Node.Stmt.Expr -> declareExpr(it.expr)
-            }}
-            .joinToString(separator = "\n${withIdent()}") { it }
+        return block?.let { block ->
+            block.stmts
+                .map {
+                    when (it) {
+                        is Node.Stmt.Decl -> declare(it.decl)
+                        is Node.Stmt.Expr -> declareExpr(it.expr)
+                    }
+                }
+                .joinToString(separator = "\n${withIdent()}") { it }
         } ?: ""
     }
 
@@ -340,17 +352,17 @@ class Convertor {
 
     private fun declareBodyBlock(body: Node.Decl.Func.Body.Block): String {
         return body.block.stmts.map {
-            when(it) {
+            when (it) {
                 is Node.Stmt.Decl -> declare(it.decl)
                 is Node.Stmt.Expr -> declareExpr(it.expr)
             }
-        }.joinToString(separator = "\n")  { withIdent(it) }
+        }.joinToString(separator = "\n") { withIdent(it) }
     }
 
     private fun declareProperty(decl: Node.Decl.Property): String {
         var text = decl.vars.map {
             "${declareTypeRef(it?.type?.ref)} ${it?.name}"
-        }.joinToString(separator = "")  { it }
+        }.joinToString(separator = "") { it }
 
         text += decl.expr?.let {
             " = ${declareExpr(decl.expr)}"
@@ -360,7 +372,7 @@ class Convertor {
     }
 
     private fun declareTypeRef(ref: Node.TypeRef?): String {
-        return when(ref) {
+        return when (ref) {
             is Node.TypeRef.Paren -> TODO()
             is Node.TypeRef.Func -> TODO()
             is Node.TypeRef.Simple -> {
@@ -378,7 +390,7 @@ class Convertor {
                     }
 
                     return text
-                }.joinToString(separator = "")  { it }
+                }.joinToString(separator = "") { it }
 
             }
             is Node.TypeRef.Nullable -> {
@@ -392,7 +404,7 @@ class Convertor {
     private fun declareStructured(decl: Node.Decl.Structured): String {
         var declareText = ""
 
-        when(decl.form) {
+        when (decl.form) {
             Form.INTERFACE -> {
                 declareText += "protocol ${decl.name}"
 
@@ -431,7 +443,7 @@ class Convertor {
 
         ident++
         declareText += decl.members
-            .map {declare(it)}
+            .map { declare(it) }
             .joinToString(separator = "") { withIdent(it) }
 
         declareText += "}\n"
@@ -441,7 +453,7 @@ class Convertor {
     }
 
     private fun declareParent(decl: Parent): String {
-        return when(decl) {
+        return when (decl) {
             is Parent.CallConstructor -> TODO()
             is Parent.Type -> declareTypeRef(decl.type)
         }

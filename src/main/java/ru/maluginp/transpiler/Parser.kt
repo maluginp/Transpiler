@@ -1,7 +1,8 @@
 package ru.maluginp.transpiler
 
 import kastree.ast.psi.Parser
-import ru.maluginp.transpiler.convertors.Convertor
+import ru.maluginp.transpiler.convertors.ASTConvertor
+import ru.maluginp.transpiler.convertors.BaseGenerator
 import java.io.File
 
 class Parser {
@@ -14,9 +15,9 @@ class Parser {
         )
 
 
-        val convertor = Convertor()
-        convertor.file(file)
+        val convertor = ASTConvertor(BaseGenerator())
+        val output = convertor.run(file)
 
-        System.out.println("Output: ${convertor.output}")
+        System.out.println(output)
     }
 }
