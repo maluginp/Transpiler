@@ -3,9 +3,8 @@ package ru.maluginp.transpiler.convertors
 import kastree.ast.Node
 import kastree.ast.Node.Decl.Structured.*
 import kastree.ast.Node.Modifier.Keyword.*
-import kotlin.math.exp
 
-class ASTConvertor(val generator: IGenerator) {
+class ASTConvertor(val transpiler: Transpiler) {
     var ident = 0
 
     fun run(file: Node.File): String {
@@ -16,15 +15,15 @@ class ASTConvertor(val generator: IGenerator) {
                 .map { it }
                 .joinToString(separator = ".") { it }
 
-            wrapIfNotEmpty(generator.formatPackage(packageName))
+            wrapIfNotEmpty(transpiler.format(AstTrPackage(packageName)))
         } ?: ""
 
         output += file.imports.map { import ->
-            val packageName:String = import.names
+            val packageName: String = import.names
                 .map { it }
                 .joinToString(separator = ".") { it }
 
-            wrapIfNotEmpty(generator.formatImport(packageName))
+            wrapIfNotEmpty(transpiler.format(AstTrImport(packageName)))
         }.joinToString(separator = "") { it }
 
 //        output += "\n"
@@ -71,7 +70,7 @@ class ASTConvertor(val generator: IGenerator) {
     private fun declareEnum(decl: Node.Decl.EnumEntry): String {
         var declareText = ""
 
-        declareText += generator.formatEnum(decl.name)
+//        declareText += generator.formatEnum(decl.name)
 
         // TODO: Add enum implementation
 
@@ -125,26 +124,15 @@ class ASTConvertor(val generator: IGenerator) {
             declareText += " "
         }
 
-        declareText += "func ${decl.name}("
 
-        declareText += decl.params.map {
-            "${declareTypeRef(it.type?.ref)} ${it.name}"
-        }.joinToString(separator = "") { it }
-
-        declareText += "): " + declareTypeRef(decl.type?.ref)
-
-        if (decl.body != null) {
-            declareText += " {\n"
-            ident++
-
-            declareText += declareBody(decl.body)
-
-            ident--
-
-            declareText += "\n${withIdent()}}"
-        }
-
-        declareText += "\n"
+        declareText += transpiler.format(AstTrFunc(
+            decl.name ?: "",
+            decl.params.map {
+                "${declareTypeRef(it.type?.ref)} ${it.name}"
+            }.joinToString(separator = "") { it },
+            declareTypeRef(decl.type?.ref),
+            decl.body?.let {declareBody(it)}
+        ))
 
         return declareText
     }
@@ -164,32 +152,34 @@ class ASTConvertor(val generator: IGenerator) {
     private fun declareExpr(expr: Node.Expr?): String {
         return when (expr) {
             is Node.Expr.If -> {
-                generator.formatIf(
-                    expr = declareExpr(expr.expr),
-                    body = declareExpr(expr.body),
-                    elseBody = expr.elseBody?.let { declareExpr(expr.elseBody) }
 
-                )
+                transpiler.format(AstTrIf(
+                    declareExpr(expr.expr),
+                    declareExpr(expr.body),
+                    expr.elseBody?.let { declareExpr(expr.elseBody) }
+                ))
             }
             is Node.Expr.Try -> TODO()
             is Node.Expr.For -> {
                 val vars = expr.vars.map {
                     declarePropertyVar(it)
                 }.joinToString { it }
-                val inExpr = declareExpr(expr.inExpr)
-                var text = "for ($vars in $inExpr)"
-
-                text += declareExpr(expr.body)
-                text
+//                var text = "for ($vars in $inExpr)"
+//
+//                text += declareExpr(expr.body)
+                transpiler.format(AstTrFor(vars, declareExpr(expr.inExpr), declareExpr(expr.body)))
             }
             is Node.Expr.While -> {
-                var text = "while("
-                text += declareExpr(expr.expr)
-                text += ")"
+//                var text = "while("
+//                text += declareExpr(expr.expr)
+//                text += ")"
+//
+//                text += declareExpr(expr.body)
 
-                text += declareExpr(expr.body)
-
-                return text
+                return transpiler.format(AstTrWhile(
+                    declareExpr(expr.expr),
+                    declareExpr(expr.body)
+                ))
             }
             is Node.Expr.BinaryOp -> {
                 var oper = expr.oper
@@ -200,21 +190,33 @@ class ASTConvertor(val generator: IGenerator) {
                 }
 
 
-                return "${declareExpr(expr.lhs)}${operator}${declareExpr(expr.rhs)}"
+                return transpiler.format(AstTrBinaryOp(
+                    declareExpr(expr.lhs),
+                    declareExpr(expr.rhs),
+                    operator
+                ))
+//                return "${declareExpr(expr.lhs)}${operator}${declareExpr(expr.rhs)}"
             }
             is Node.Expr.UnaryOp -> {
-                var operator = expr.oper.token.str
+                return transpiler.format(AstTrUnaryOp(
+                    expr.prefix,
+                    declareExpr(expr.expr),
+                    expr.oper.token.str
+                ))
 
-                if (expr.prefix) {
-                    return "$operator${declareExpr(expr.expr)}"
-                } else {
-                    return "${declareExpr(expr.expr)}$operator"
-                }
+//                if (expr.prefix) {
+//                    return "$operator${declareExpr(expr.expr)}"
+//                } else {
+//                    return "${declareExpr(expr.expr)}$operator"
+//                }
             }
             is Node.Expr.TypeOp -> {
-                var operator: String = expr.oper.token.str
+                return transpiler.format(AstTrExprTypeOp(
+                    declareExpr(expr.lhs),
+                    expr.oper.token.str,
+                    declareTypeRef(expr.rhs.ref)
+                ))
 
-                return "${declareExpr(expr.lhs)}${operator}${declareTypeRef(expr.rhs.ref)}"
             }
             is Node.Expr.DoubleColonRef.Callable -> {
                 return "DoubleColonRef.Callable ${expr.name}"
@@ -223,7 +225,7 @@ class ASTConvertor(val generator: IGenerator) {
                 return "DoubleColonRef.class"
             }
             is Node.Expr.Paren -> {
-                declareExpr(expr.expr)
+                return declareExpr(expr.expr)
             }
             is Node.Expr.StringTmpl -> {
                 return "\"" + expr.elems.map {
@@ -237,7 +239,15 @@ class ASTConvertor(val generator: IGenerator) {
                 }.joinToString { it } + "\""
             }
             is Node.Expr.Const -> {
-                return expr.value
+//                when(expr.form) {
+//                    Node.Expr.Const.Form.BOOLEAN -> TODO()
+//                    Node.Expr.Const.Form.CHAR -> TODO()
+//                    Node.Expr.Const.Form.INT -> TODO()
+//                    Node.Expr.Const.Form.FLOAT -> TODO()
+//                    Node.Expr.Const.Form.NULL -> TODO()
+//                }
+
+                return transpiler.format(AstTrExprConst(expr.value))
 //                return "const ${expr.form.name} = ${expr.value}"
             }
             is Node.Expr.Brace -> {
@@ -253,55 +263,72 @@ class ASTConvertor(val generator: IGenerator) {
                 return "braceparam"
             }
             is Node.Expr.This -> {
-                return "this"
+                return transpiler.format(AstTrExprThis(expr.label))
             }
             is Node.Expr.Super -> {
-                return "super"
+                return transpiler.format(AstTrExprSuper(
+                    declareTypeRef(expr.typeArg?.ref),
+                    expr.label
+                ))
             }
             is Node.Expr.When -> {
-                return "when"
+                return transpiler.format(AstTrExprWhen(
+                    declareExpr(expr.expr),
+                    expr.entries.map { entry -> AstTrExprWhenEntry(
+                        entry.conds.map { declareWhenCond(it) },
+                        declareExpr(entry.body)
+                    )}
+                ))
             }
             is Node.Expr.Object -> {
-                return "object"
+                return transpiler.format(AstTrExprObject(
+                    expr.parents.map { AstTrStructureParent(declareParent(it)) },
+                    expr.members.map { AstTrStructureMember(declare(it)) }
+                ))
             }
             is Node.Expr.Throw -> {
-                return "throw "
+                return transpiler.format(AstTrThrow(declareExpr(expr.expr)))
             }
             is Node.Expr.Return -> {
-                return "return ${declareExpr(expr.expr)}"
+                return transpiler.format(AstTrReturn(
+                    declareExpr(expr.expr),
+                    expr.label
+                ))
             }
             is Node.Expr.Continue -> {
-                return "continue"
+                return transpiler.format(AstTrExprContinue(expr.label))
             }
             is Node.Expr.Break -> {
-                return "break"
+                return transpiler.format(AstTrExprBreak(expr.label))
             }
             is Node.Expr.CollLit -> TODO()
             is Node.Expr.Name -> {
-                return expr.name
+                return transpiler.format(AstTrExprName(expr.name))
             }
             is Node.Expr.Labeled -> {
-                return "${expr.label} ${declareExpr(expr.expr)}"
+                return transpiler.format(AstTrExprLabeled(
+                    declareExpr(expr.expr),
+                    expr.label
+                ))
             }
             is Node.Expr.Annotated -> TODO()
             is Node.Expr.Call -> {
-                var text = declareExpr(expr.expr)
-
-                if (expr.args.isNotEmpty()) {
-                    text += "("
-                    text += expr.args
-                        .map { declareValueArg(it) }
-                        .joinToString { it }
-                    text += ")"
-                } else if (expr.lambda == null) {
-                    text += "()"
-                }
-
-                text += expr.lambda?.let { lambda ->
-                    declareExpr(lambda.func)
-                } ?: ""
-
-                return text
+                return if (expr.lambda == null) {
+                    AstTrCall(
+                        declareExpr(expr.expr),
+                        expr.args
+                            .map { declareValueArg(it) }
+                            .joinToString { it }
+                    )
+                } else {
+                    AstTrCallLambda(
+                        declareExpr(expr.expr),
+                        expr.args
+                            .map { declareValueArg(it) }
+                            .joinToString { it },
+                        declareExpr(expr.lambda?.func)
+                    )
+                }.let(transpiler::format)
             }
             is Node.Expr.ArrayAccess -> {
                 var text = declareExpr(expr.expr)
@@ -311,11 +338,21 @@ class ASTConvertor(val generator: IGenerator) {
                 text += "]"
                 return text
             }
-            is Node.Expr.AnonFunc -> TODO()
+            is Node.Expr.AnonFunc -> {
+                return ""
+            }
             is Node.Expr.Property -> {
-                return declare(expr.decl)
+                return transpiler.format(AstTrExprProperty(declare(expr.decl)))
             }
             null -> ""
+        }
+    }
+
+    private fun declareWhenCond(cond: Node.Expr.When.Cond): TrExprWhenEntryCondition {
+        return when(cond) {
+            is Node.Expr.When.Cond.Expr -> AstTrExprWhenEntryCondition(declareExpr(cond.expr))
+            is Node.Expr.When.Cond.In -> AstTrExprWhenEntryConditionIn(declareExpr(cond.expr), cond.not)
+            is Node.Expr.When.Cond.Is -> AstTrExprWhenEntryConditionIs(declareTypeRef(cond.type.ref), cond.not)
         }
     }
 
@@ -402,54 +439,44 @@ class ASTConvertor(val generator: IGenerator) {
     }
 
     private fun declareStructured(decl: Node.Decl.Structured): String {
-        var declareText = ""
-
-        when (decl.form) {
+        return when (decl.form) {
             Form.INTERFACE -> {
-                declareText += "protocol ${decl.name}"
-
-                if (decl.parents.isNotEmpty()) {
-                    declareText += ": "
-                    declareText += decl.parents.map { declareParent(it) }
-                        .joinToString(separator = ",") { it }
-                }
-
-                declareText += " {\n"
+                AstTrInterface(
+                    decl.name,
+                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
+                    decl.members.map { AstTrStructureMember(declare(it))  }
+                )
             }
             Form.CLASS -> {
-                declareText += "class ${decl.name}"
-
-                if (decl.parents.isNotEmpty()) {
-                    declareText += ": "
-                    declareText += decl.parents.map { declareParent(it) }
-                        .joinToString(separator = ",") { it }
-                }
-
-                declareText += " {\n"
-
+                AstTrClass(
+                    decl.name,
+                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
+                    decl.members.map { AstTrStructureMember(declare(it))  }
+                )
             }
             Form.COMPANION_OBJECT -> {
-
+                AstTrCompanionObject(
+                    decl.name,
+                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
+                    decl.members.map { AstTrStructureMember(declare(it))  }
+                )
             }
             Form.ENUM_CLASS -> {
-                declareText += "enum ${decl.name} "
+                AstTrEnumClass(
+                    decl.name,
+                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
+                    decl.members.map { AstTrStructureMember(declare(it))  }
+                )
 
             }
             Form.OBJECT -> {
-
+                AstTrObject(
+                    decl.name,
+                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
+                    decl.members.map { AstTrStructureMember(declare(it))  }
+                )
             }
-
-        }
-
-        ident++
-        declareText += decl.members
-            .map { declare(it) }
-            .joinToString(separator = "") { withIdent(it) }
-
-        declareText += "}\n"
-        ident--
-
-        return declareText
+        }.let(transpiler::format)
     }
 
     private fun declareParent(decl: Parent): String {

@@ -2,7 +2,7 @@ package ru.maluginp.transpiler
 
 import kastree.ast.psi.Parser
 import ru.maluginp.transpiler.convertors.ASTConvertor
-import ru.maluginp.transpiler.convertors.BaseGenerator
+import ru.maluginp.transpiler.convertors.SwiftTranspiler
 import java.io.File
 
 class Parser {
@@ -15,7 +15,7 @@ class Parser {
         )
 
 
-        val convertor = ASTConvertor(BaseGenerator())
+        val convertor = ASTConvertor(SwiftTranspiler())
         val output = convertor.run(file)
 
         System.out.println(output)
