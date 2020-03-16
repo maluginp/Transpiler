@@ -13,13 +13,13 @@ interface TrPackage : TrElement {
     val name: String
 }
 
-class AstTrPackage(override val name: String) : TrPackage
+data class AstTrPackage(override val name: String) : TrPackage
 
 interface TrImport : TrElement {
     val name: String
 }
 
-class AstTrImport(override val name: String) : TrImport
+data class AstTrImport(override val name: String) : TrImport
 
 interface TrEnum : TrElement
 
@@ -29,7 +29,7 @@ interface TrIf : TrElement {
     val elseBody: String?
 }
 
-class AstTrIf(
+data class AstTrIf(
     override val expr: String,
     override val body: String,
     override val elseBody: String? = null
@@ -42,7 +42,7 @@ interface TrFor : TrElement {
     val body: String
 }
 
-class AstTrFor(
+data class AstTrFor(
     override val exprLeft: String,
     override val exprRight: String,
     override val body: String
@@ -55,7 +55,7 @@ interface TrFunc: TrElement {
     val body: String?
 }
 
-class AstTrFunc(
+data class AstTrFunc(
     override val name: String,
     override val arguments: String,
     override val returnType: String,
@@ -68,7 +68,7 @@ interface TrBinaryOp : TrElement {
     val op: String
 }
 
-class AstTrBinaryOp(
+data class AstTrBinaryOp(
     override val left: String,
     override val right: String,
     override val op: String
@@ -81,7 +81,7 @@ interface TrUnaryOp: TrElement {
     val op: String
 }
 
-class AstTrUnaryOp(
+data class AstTrUnaryOp(
     override val prefix: Boolean,
     override val expr: String,
     override val op: String
@@ -93,7 +93,7 @@ interface TrWhile: TrElement {
     val body: String
 }
 
-class AstTrWhile(
+data class AstTrWhile(
     override val expr: String,
     override val body: String
 ) : TrWhile
@@ -103,7 +103,7 @@ interface TrThrow: TrElement {
     val expr: String
 }
 
-class AstTrThrow(
+data class AstTrThrow(
     override val expr: String
 ): TrThrow
 
@@ -116,7 +116,7 @@ interface TrReturn: TrElement {
     val label: String?
 }
 
-class AstTrReturn(
+data class AstTrReturn(
     override val expr: String,
     override val label: String?
 ): TrReturn
@@ -127,7 +127,7 @@ interface TrCall: TrElement {
     val arguments: String
 }
 
-class AstTrCall(
+data class AstTrCall(
     override val expr: String,
     override val arguments: String
 ): TrCall
@@ -138,7 +138,7 @@ interface TrCallLambda: TrElement {
     val lambda: String
 }
 
-class AstTrCallLambda(
+data class AstTrCallLambda(
     override val expr: String,
     override val arguments: String,
     override val lambda: String
@@ -150,7 +150,7 @@ interface TrInterface: TrElement {
     val members: Iterable<TrStructureMember>
 }
 
-class AstTrInterface(
+data class AstTrInterface(
     override val name: String,
     override val parents: Iterable<TrStructureParent>,
     override val members: Iterable<TrStructureMember>
@@ -162,7 +162,7 @@ interface TrClass: TrElement {
     val members: Iterable<TrStructureMember>
 }
 
-class AstTrClass(
+data class AstTrClass(
     override val name: String,
     override val parents: Iterable<TrStructureParent>,
     override val members: Iterable<TrStructureMember>
@@ -172,7 +172,7 @@ interface TrStructureParent: TrElement {
     val expr: String
 }
 
-class AstTrStructureParent(
+data class AstTrStructureParent(
     override val expr: String
 ): TrStructureParent
 
@@ -180,7 +180,7 @@ interface TrStructureMember: TrElement {
     val expr: String
 }
 
-class AstTrStructureMember(
+data class AstTrStructureMember(
     override val expr: String
 ): TrStructureMember
 
@@ -191,7 +191,7 @@ interface TrObject: TrElement {
     val members: Iterable<TrStructureMember>
 }
 
-class AstTrObject(
+data class AstTrObject(
     override val name: String,
     override val parents: Iterable<TrStructureParent>,
     override val members: Iterable<TrStructureMember>
@@ -203,7 +203,7 @@ interface TrCompanionObject: TrElement {
     val members: Iterable<TrStructureMember>
 }
 
-class AstTrCompanionObject(
+data class AstTrCompanionObject(
     override val name: String,
     override val parents: Iterable<TrStructureParent>,
     override val members: Iterable<TrStructureMember>
@@ -215,7 +215,7 @@ interface TrEnumClass: TrElement {
     val members: Iterable<TrStructureMember>
 }
 
-class AstTrEnumClass(
+data class AstTrEnumClass(
     override val name: String,
     override val parents: Iterable<TrStructureParent>,
     override val members: Iterable<TrStructureMember>
@@ -225,7 +225,7 @@ interface TrExprConst: TrElement {
     val value: String
 }
 
-class AstTrExprConst(
+data class AstTrExprConst(
     override val value: String
 ): TrExprConst
 
@@ -235,7 +235,7 @@ interface TrExprTypeOp: TrElement {
     val type: String
 }
 
-class AstTrExprTypeOp(
+data class AstTrExprTypeOp(
     override val expr: String,
     override val op: String,
     override val type: String
@@ -246,7 +246,7 @@ interface TrExprSuper: TrElement {
     val label: String?
 }
 
-class AstTrExprSuper(
+data class AstTrExprSuper(
     override val type: String,
     override val label: String?
 ): TrExprSuper
@@ -256,7 +256,7 @@ interface TrExprThis: TrElement {
     val label: String?
 }
 
-class AstTrExprThis(
+data class AstTrExprThis(
     override val label: String?
 ): TrExprThis
 
@@ -264,7 +264,7 @@ interface TrExprContinue: TrElement {
     val label: String?
 }
 
-class AstTrExprContinue(
+data class AstTrExprContinue(
     override val label: String?
 ): TrExprContinue
 
@@ -272,7 +272,7 @@ interface TrExprBreak: TrElement{
     val label: String?
 }
 
-class AstTrExprBreak(
+data class AstTrExprBreak(
     override val label: String?
 ): TrExprBreak
 
@@ -281,7 +281,7 @@ interface TrExprObject: TrElement {
     val members: Iterable<TrStructureMember>
 }
 
-class AstTrExprObject(
+data class AstTrExprObject(
     override val parents: Iterable<TrStructureParent>,
     override val members: Iterable<TrStructureMember>
 ): TrExprObject
@@ -291,7 +291,7 @@ interface TrExprWhen: TrElement {
     val entries: Iterable<TrExprWhenEntry>
 }
 
-class AstTrExprWhen(
+data class AstTrExprWhen(
     override val expr: String?,
     override val entries: Iterable<TrExprWhenEntry>
 ): TrExprWhen
@@ -301,7 +301,7 @@ interface TrExprWhenEntry: TrElement{
     val expr: String
 }
 
-class AstTrExprWhenEntry(
+data class AstTrExprWhenEntry(
     override val conditions: Iterable<TrExprWhenEntryCondition>,
     override val expr: String
 ): TrExprWhenEntry
@@ -318,16 +318,16 @@ interface TrExprWhenEntryConditionIs: TrExprWhenEntryCondition {
     val not: Boolean
 }
 
-class AstTrExprWhenEntryCondition(
+data class AstTrExprWhenEntryCondition(
     override val expr: String
 ): TrExprWhenEntryCondition
 
-class AstTrExprWhenEntryConditionIn(
+data class AstTrExprWhenEntryConditionIn(
     override val expr: String,
     override val not: Boolean
 ): TrExprWhenEntryConditionIn
 
-class AstTrExprWhenEntryConditionIs(
+data class AstTrExprWhenEntryConditionIs(
     override val expr: String,
     override val not: Boolean
 ): TrExprWhenEntryConditionIs
@@ -337,7 +337,7 @@ interface TrExprLabeled: TrElement {
     val label: String?
 }
 
-class AstTrExprLabeled(
+data class AstTrExprLabeled(
     override val expr: String,
     override val label: String?
 ): TrExprLabeled
@@ -346,7 +346,7 @@ interface TrExprName: TrElement {
     val name: String
 }
 
-class AstTrExprName(
+data class AstTrExprName(
     override val name: String
 ): TrExprName
 
@@ -354,6 +354,6 @@ interface TrExprProperty: TrElement {
     val expr: String
 }
 
-class AstTrExprProperty(
+data class AstTrExprProperty(
     override val expr: String
 ): TrExprProperty
