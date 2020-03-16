@@ -11,7 +11,7 @@ class Parser {
                 = File(fileName).readText(Charsets.UTF_8)
 
         val file = Parser.parseFile(
-            readFileDirectlyAsText("/Users/pmalyugin/Developer/Startups/Transpiler/src/main/java/ru/maluginp/transpiler/Sample.kt")
+            readFileDirectlyAsText("./src/main/java/ru/maluginp/transpiler/Sample.kt")
         )
 
 
