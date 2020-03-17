@@ -1,4 +1,4 @@
-package ru.maluginp.transpiler.convertors
+package ru.maluginp.transpiler.core
 
 import kastree.ast.Node
 import kastree.ast.Node.Decl.Structured.*

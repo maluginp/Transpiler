@@ -1,7 +1,7 @@
 package ru.maluginp.transpiler.swift
 
-import ru.maluginp.transpiler.convertors.TrImplementation
-import ru.maluginp.transpiler.convertors.TrPropertyVar
+import ru.maluginp.transpiler.core.TrImplementation
+import ru.maluginp.transpiler.core.TrPropertyVar
 
 class SwiftTrPropertyVar(private val el: TrPropertyVar) : TrImplementation {
     override fun output(): String {

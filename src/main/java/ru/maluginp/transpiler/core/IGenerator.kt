@@ -1,4 +1,4 @@
-package ru.maluginp.transpiler.convertors
+package ru.maluginp.transpiler.core
 
 interface IGenerator {
     fun formatPackage(packageName: String): String

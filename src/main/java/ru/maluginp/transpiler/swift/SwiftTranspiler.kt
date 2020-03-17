@@ -1,6 +1,6 @@
 package ru.maluginp.transpiler.swift
 
-import ru.maluginp.transpiler.convertors.*
+import ru.maluginp.transpiler.core.*
 
 class SwiftTranspiler : Transpiler {
     override fun format(element: TrElement): String = when (element) {

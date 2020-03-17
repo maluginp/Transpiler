@@ -1,10 +1,10 @@
 package ru.maluginp.transpiler.swift
 
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
-import ru.maluginp.transpiler.convertors.TrImplementation
-import ru.maluginp.transpiler.convertors.TrInterface
-import ru.maluginp.transpiler.convertors.TrMember
-import ru.maluginp.transpiler.convertors.TrParent
+import ru.maluginp.transpiler.core.TrImplementation
+import ru.maluginp.transpiler.core.TrInterface
+import ru.maluginp.transpiler.core.TrMember
+import ru.maluginp.transpiler.core.TrParent
 
 
 class SwiftTrEmpty: TrImplementation {

@@ -1,7 +1,7 @@
 package ru.maluginp.transpiler.swift
 
-import ru.maluginp.transpiler.convertors.TrImplementation
-import ru.maluginp.transpiler.convertors.TrTypeRefFunc
+import ru.maluginp.transpiler.core.TrImplementation
+import ru.maluginp.transpiler.core.TrTypeRefFunc
 
 class SwiftTrTypeRefFunc(private val el: TrTypeRefFunc) : TrImplementation {
     override fun output(): String {

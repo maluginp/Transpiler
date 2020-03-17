@@ -1,7 +1,7 @@
 package ru.maluginp.transpiler.swift
 
-import ru.maluginp.transpiler.convertors.TrCall
-import ru.maluginp.transpiler.convertors.TrImplementation
+import ru.maluginp.transpiler.core.TrCall
+import ru.maluginp.transpiler.core.TrImplementation
 
 class SwiftTrCall(private val el: TrCall): TrImplementation {
     override fun output(): String {

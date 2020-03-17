@@ -1,7 +1,7 @@
 package ru.maluginp.transpiler.swift
 
-import ru.maluginp.transpiler.convertors.TrImplementation
-import ru.maluginp.transpiler.convertors.TrThrow
+import ru.maluginp.transpiler.core.TrImplementation
+import ru.maluginp.transpiler.core.TrThrow
 
 class SwiftTrThrow(private val el: TrThrow) : TrImplementation {
     override fun output(): String {

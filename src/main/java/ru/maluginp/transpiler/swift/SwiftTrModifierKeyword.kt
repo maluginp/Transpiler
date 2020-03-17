@@ -1,7 +1,7 @@
 package ru.maluginp.transpiler.swift
 
-import ru.maluginp.transpiler.convertors.TrImplementation
-import ru.maluginp.transpiler.convertors.TrModifierKeyword
+import ru.maluginp.transpiler.core.TrImplementation
+import ru.maluginp.transpiler.core.TrModifierKeyword
 
 class SwiftTrModifierKeyword(private val el: TrModifierKeyword) : TrImplementation {
     override fun output(): String {

@@ -1,7 +1,7 @@
 package ru.maluginp.transpiler.swift
 
-import ru.maluginp.transpiler.convertors.TrExprWhenEntryConditionIs
-import ru.maluginp.transpiler.convertors.TrImplementation
+import ru.maluginp.transpiler.core.TrExprWhenEntryConditionIs
+import ru.maluginp.transpiler.core.TrImplementation
 
 class SwiftTrExprWhenEntryConditionIs(private val el: TrExprWhenEntryConditionIs) : TrImplementation {
     override fun output(): String {

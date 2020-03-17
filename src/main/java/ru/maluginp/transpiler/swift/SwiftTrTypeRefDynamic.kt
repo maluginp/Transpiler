@@ -1,7 +1,7 @@
 package ru.maluginp.transpiler.swift
 
-import ru.maluginp.transpiler.convertors.TrImplementation
-import ru.maluginp.transpiler.convertors.TrTypeRefDynamic
+import ru.maluginp.transpiler.core.TrImplementation
+import ru.maluginp.transpiler.core.TrTypeRefDynamic
 
 class SwiftTrTypeRefDynamic(private val el: TrTypeRefDynamic) : TrImplementation {
     override fun output(): String {

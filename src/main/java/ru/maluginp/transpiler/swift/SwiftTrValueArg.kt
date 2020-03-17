@@ -1,7 +1,7 @@
 package ru.maluginp.transpiler.swift
 
-import ru.maluginp.transpiler.convertors.TrImplementation
-import ru.maluginp.transpiler.convertors.TrValueArg
+import ru.maluginp.transpiler.core.TrImplementation
+import ru.maluginp.transpiler.core.TrValueArg
 
 class SwiftTrValueArg(private val el: TrValueArg) : TrImplementation {
     override fun output(): String {
