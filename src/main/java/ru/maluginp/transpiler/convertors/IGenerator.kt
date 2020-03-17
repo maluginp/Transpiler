@@ -35,30 +35,30 @@ data class AstTrIf(
 
 
 interface TrFor : TrElement {
-    val exprLeft: Iterable<TrPropertyVar>
+    val exprLeft: Collection<TrPropertyVar>
     val exprRight: String
     val body: String
 }
 
 data class AstTrFor(
-    override val exprLeft: Iterable<TrPropertyVar>,
+    override val exprLeft: Collection<TrPropertyVar>,
     override val exprRight: String,
     override val body: String
 ) : TrFor
 
 interface TrFunc: TrElement {
     val name: String?
-    val params: Iterable<TrFuncParam>
+    val params: Collection<TrFuncParam>
     val returnType: String
-    val modifiers: Iterable<TrModifier>
+    val modifiers: Collection<TrModifier>
     val body: String?
 }
 
 data class AstTrFunc(
     override val name: String?,
-    override val params: Iterable<TrFuncParam>,
+    override val params: Collection<TrFuncParam>,
     override val returnType: String,
-    override val modifiers: Iterable<TrModifier>,
+    override val modifiers: Collection<TrModifier>,
     override val body: String?
 ): TrFunc
 
@@ -124,101 +124,101 @@ data class AstTrReturn(
 
 interface TrCall: TrElement {
     val expr: String
-    val args: Iterable<TrValueArg>
+    val args: Collection<TrValueArg>
 }
 
 data class AstTrCall(
     override val expr: String,
-    override val args: Iterable<TrValueArg>
+    override val args: Collection<TrValueArg>
 ): TrCall
 
 interface TrCallLambda: TrElement {
     val expr: String
-    val args: Iterable<TrValueArg>
+    val args: Collection<TrValueArg>
     val lambda: String
 }
 
 data class AstTrCallLambda(
     override val expr: String,
-    override val args: Iterable<TrValueArg>,
+    override val args: Collection<TrValueArg>,
     override val lambda: String
 ): TrCallLambda
 
 interface TrInterface: TrElement {
     val name: String
-    val parents: Iterable<TrStructureParent>
-    val members: Iterable<TrStructureMember>
+    val parents: Collection<TrParent>
+    val members: Collection<TrMember>
 }
 
 data class AstTrInterface(
     override val name: String,
-    override val parents: Iterable<TrStructureParent>,
-    override val members: Iterable<TrStructureMember>
+    override val parents: Collection<TrParent>,
+    override val members: Collection<TrMember>
 ) : TrInterface
 
 interface TrClass: TrElement {
     val name: String
-    val parents: Iterable<TrStructureParent>
-    val members: Iterable<TrStructureMember>
+    val parents: Collection<TrParent>
+    val members: Collection<TrMember>
 }
 
 data class AstTrClass(
     override val name: String,
-    override val parents: Iterable<TrStructureParent>,
-    override val members: Iterable<TrStructureMember>
+    override val parents: Collection<TrParent>,
+    override val members: Collection<TrMember>
 ): TrClass
 
-interface TrStructureParent: TrElement {
+interface TrParent: TrElement {
     val expr: String
 }
 
-data class AstTrStructureParent(
+data class AstTrParent(
     override val expr: String
-): TrStructureParent
+): TrParent
 
-interface TrStructureMember: TrElement {
+interface TrMember: TrElement {
     val expr: String
 }
 
-data class AstTrStructureMember(
+data class AstTrMember(
     override val expr: String
-): TrStructureMember
+): TrMember
 
 
 interface TrObject: TrElement {
     val name: String
-    val parents: Iterable<TrStructureParent>
-    val members: Iterable<TrStructureMember>
+    val parents: Collection<TrParent>
+    val members: Collection<TrMember>
 }
 
 data class AstTrObject(
     override val name: String,
-    override val parents: Iterable<TrStructureParent>,
-    override val members: Iterable<TrStructureMember>
+    override val parents: Collection<TrParent>,
+    override val members: Collection<TrMember>
 ): TrObject
 
 interface TrCompanionObject: TrElement {
     val name: String
-    val parents: Iterable<TrStructureParent>
-    val members: Iterable<TrStructureMember>
+    val parents: Collection<TrParent>
+    val members: Collection<TrMember>
 }
 
 data class AstTrCompanionObject(
     override val name: String,
-    override val parents: Iterable<TrStructureParent>,
-    override val members: Iterable<TrStructureMember>
+    override val parents: Collection<TrParent>,
+    override val members: Collection<TrMember>
 ): TrObject
 
 interface TrEnumClass: TrElement {
     val name: String
-    val parents: Iterable<TrStructureParent>
-    val members: Iterable<TrStructureMember>
+    val parents: Collection<TrParent>
+    val members: Collection<TrMember>
 }
 
 data class AstTrEnumClass(
     override val name: String,
-    override val parents: Iterable<TrStructureParent>,
-    override val members: Iterable<TrStructureMember>
+    override val parents: Collection<TrParent>,
+    override val members: Collection<TrMember>
 ): TrEnumClass
 
 interface TrExprConst: TrElement {
@@ -277,32 +277,32 @@ data class AstTrExprBreak(
 ): TrExprBreak
 
 interface TrExprObject: TrElement {
-    val parents: Iterable<TrStructureParent>
-    val members: Iterable<TrStructureMember>
+    val parents: Collection<TrParent>
+    val members: Collection<TrMember>
 }
 
 data class AstTrExprObject(
-    override val parents: Iterable<TrStructureParent>,
-    override val members: Iterable<TrStructureMember>
+    override val parents: Collection<TrParent>,
+    override val members: Collection<TrMember>
 ): TrExprObject
 
 interface TrExprWhen: TrElement {
     val expr: String?
-    val entries: Iterable<TrExprWhenEntry>
+    val entries: Collection<TrExprWhenEntry>
 }
 
 data class AstTrExprWhen(
     override val expr: String?,
-    override val entries: Iterable<TrExprWhenEntry>
+    override val entries: Collection<TrExprWhenEntry>
 ): TrExprWhen
 
 interface TrExprWhenEntry: TrElement{
-    val conditions: Iterable<TrExprWhenEntryCondition>
+    val conditions: Collection<TrExprWhenEntryCondition>
     val expr: String
 }
 
 data class AstTrExprWhenEntry(
-    override val conditions: Iterable<TrExprWhenEntryCondition>,
+    override val conditions: Collection<TrExprWhenEntryCondition>,
     override val expr: String
 ): TrExprWhenEntry
 
@@ -371,13 +371,13 @@ data class AstTrPropertyVar(
 interface TrTypeAlias: TrElement {
     val name: String
     val type: String
-    val typeParams: Iterable<TrTypeParam>
+    val typeParams: Collection<TrTypeParam>
 }
 
 data class AstTrTypeAlias(
     override val name: String,
     override val type: String,
-    override val typeParams: Iterable<TrTypeParam>
+    override val typeParams: Collection<TrTypeParam>
 ): TrTypeAlias
 
 interface TrTypeParam: TrElement {
@@ -401,13 +401,13 @@ data class AstTrInitBlock(
 interface TrEnum: TrElement {
     val name: String
     val args: List<TrValueArg>
-    val members: Iterable<TrStructureMember>
+    val members: Collection<TrMember>
 }
 
 data class AstTrEnum(
     override val name: String,
     override val args: List<TrValueArg>,
-    override val members: Iterable<TrStructureMember>
+    override val members: Collection<TrMember>
 ): TrEnum
 
 
@@ -510,29 +510,29 @@ data class AstTrFuncParam (
 ): TrFuncParam
 
 interface TrProperty: TrElement {
-    val vars: Iterable<TrPropertyVar>
+    val vars: Collection<TrPropertyVar>
     val readOnly: Boolean
     val delegated: Boolean
     val expr: String?
     val receiveType: String?
-    val typeParams: Iterable<TrTypeParam>
+    val typeParams: Collection<TrTypeParam>
 }
 
 data class AstTrProperty(
-    override val vars: Iterable<TrPropertyVar>,
+    override val vars: Collection<TrPropertyVar>,
     override val readOnly: Boolean,
     override val delegated: Boolean,
     override val expr: String?,
     override val receiveType: String?,
-    override val typeParams: Iterable<TrTypeParam>
+    override val typeParams: Collection<TrTypeParam>
 ): TrProperty
 
 interface TrBlock: TrElement {
-    val statements: Iterable<TrStatement>
+    val statements: Collection<TrStatement>
 }
 
 data class AstTrBlock(
-    override val statements: Iterable<TrStatement>
+    override val statements: Collection<TrStatement>
 ): TrBlock
 
 interface TrStatement: TrElement {
@@ -544,45 +544,45 @@ data class AstTrStatement(
 ): TrStatement
 
 interface TrExprBrace: TrElement {
-    val params: Iterable<TrExprBraceParam>
+    val params: Collection<TrExprBraceParam>
     val body: TrBlock?
 }
 
 data class AstTrExprBrace(
-    override val params: Iterable<TrExprBraceParam>,
+    override val params: Collection<TrExprBraceParam>,
     override val body: TrBlock?
 ): TrExprBrace
 
 interface TrExprBraceParam: TrElement {
     val destructType: String?
-    val vars: Iterable<TrPropertyVar>
+    val vars: Collection<TrPropertyVar>
 }
 
 data class AstTrExprBraceParam(
     override val destructType: String?,
-    override val vars: Iterable<TrPropertyVar>
+    override val vars: Collection<TrPropertyVar>
 ): TrExprBraceParam
 
 interface TrAnnotationSet: TrElement {
     val targetName: String?
-    val annotations: Iterable<TrAnnotation>
+    val annotations: Collection<TrAnnotation>
 }
 
 data class AstTrAnnotationSet(
     override val targetName: String?,
-    override val annotations: Iterable<TrAnnotation>
+    override val annotations: Collection<TrAnnotation>
 ): TrAnnotationSet
 
 interface TrAnnotation: TrElement {
-    val args: Iterable<TrValueArg>
-    val names: Iterable<String>
-    val typeArgs: Iterable<String>
+    val args: Collection<TrValueArg>
+    val names: Collection<String>
+    val typeArgs: Collection<String>
 }
 
 data class AstTrAnnotation(
-    override val args: Iterable<TrValueArg>,
-    override val names: Iterable<String>,
-    override val typeArgs: Iterable<String>
+    override val args: Collection<TrValueArg>,
+    override val names: Collection<String>,
+    override val typeArgs: Collection<String>
 ): TrAnnotation
 
 
@@ -603,30 +603,30 @@ class AstTrTypeRefDynamic: TrTypeRefDynamic
 
 interface TrTypeRefPiece: TrElement {
     val name: String
-    val typeParams: Iterable<String>
+    val typeParams: Collection<String>
 }
 interface TrTypeRef: TrElement {
-    val pieces: Iterable<TrTypeRefPiece>
+    val pieces: Collection<TrTypeRefPiece>
 }
 
 data class AstTrTypeRef(
-    override val pieces: Iterable<TrTypeRefPiece>
+    override val pieces: Collection<TrTypeRefPiece>
 ): TrTypeRef
 
 data class AstTrTypeRefPiece(
     override val name: String,
-    override val typeParams: Iterable<String>
+    override val typeParams: Collection<String>
 ): TrTypeRefPiece
 
 interface TrTypeRefFunc: TrElement {
     val type: String
-    val params: Iterable<TrTypeRefFuncParam>
+    val params: Collection<TrTypeRefFuncParam>
     val receiveType: String
 }
 
 data class AstTrTypeRefFunc(
     override val type: String,
-    override val params: Iterable<TrTypeRefFuncParam>,
+    override val params: Collection<TrTypeRefFuncParam>,
     override val receiveType: String
 ): TrTypeRefFunc
 
@@ -642,12 +642,12 @@ data class AstTrTypeRefFuncParam(
 
 interface TrExprArrayAccess: TrElement {
     val expr: String
-    val indices: Iterable<String>
+    val indices: Collection<String>
 }
 
 data class AstTrExprArrayAccess(
     override val expr: String,
-    override val indices: Iterable<String>
+    override val indices: Collection<String>
 ): TrExprArrayAccess
 
 interface TrExprCollLit: TrElement {
@@ -667,22 +667,22 @@ data class AstTrExprAnnotated(
 ): TrExprAnnotated
 
 interface TrExprStringTmpl: TrElement {
-    val elements: Iterable<String>
+    val elements: Collection<String>
 }
 
 data class AstTrExprStringTmpl(
-    override val elements: Iterable<String>
+    override val elements: Collection<String>
 ): TrExprStringTmpl
 
 interface TrTry: TrElement {
     val block: TrBlock
-    val catches: Iterable<TrCatch>
+    val catches: Collection<TrCatch>
     val finallyBlock: TrBlock?
 }
 
 data class AstTrTry(
     override val block: TrBlock,
-    override val catches: Iterable<TrCatch>,
+    override val catches: Collection<TrCatch>,
     override val finallyBlock: TrBlock?
 ): TrTry
 
@@ -698,3 +698,8 @@ data class AstTrCatch(
     override val type: String,
     override val block: TrBlock
 ): TrCatch
+
+
+interface TrImplementation {
+    fun output(): String
+}

@@ -70,7 +70,7 @@ class ASTConvertor(val transpiler: Transpiler) {
         return transpiler.format(AstTrEnum(
             decl.name,
             decl.args.map { declareValueArg(it) },
-            decl.members.map { AstTrStructureMember(declare(it)) }
+            decl.members.map { AstTrMember(declare(it)) }
         ))
     }
 
@@ -296,8 +296,8 @@ class ASTConvertor(val transpiler: Transpiler) {
             }
             is Node.Expr.Object -> {
                 return transpiler.format(AstTrExprObject(
-                    expr.parents.map { AstTrStructureParent(declareParent(it)) },
-                    expr.members.map { AstTrStructureMember(declare(it)) }
+                    expr.parents.map { AstTrParent(declareParent(it)) },
+                    expr.members.map { AstTrMember(declare(it)) }
                 ))
             }
             is Node.Expr.Throw -> {
@@ -444,37 +444,37 @@ class ASTConvertor(val transpiler: Transpiler) {
             Form.INTERFACE -> {
                 AstTrInterface(
                     decl.name,
-                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
-                    decl.members.map { AstTrStructureMember(declare(it)) }
+                    decl.parents.map { AstTrParent(declareParent(it)) },
+                    decl.members.map { AstTrMember(declare(it)) }
                 )
             }
             Form.CLASS -> {
                 AstTrClass(
                     decl.name,
-                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
-                    decl.members.map { AstTrStructureMember(declare(it)) }
+                    decl.parents.map { AstTrParent(declareParent(it)) },
+                    decl.members.map { AstTrMember(declare(it)) }
                 )
             }
             Form.COMPANION_OBJECT -> {
                 AstTrCompanionObject(
                     decl.name,
-                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
-                    decl.members.map { AstTrStructureMember(declare(it)) }
+                    decl.parents.map { AstTrParent(declareParent(it)) },
+                    decl.members.map { AstTrMember(declare(it)) }
                 )
             }
             Form.ENUM_CLASS -> {
                 AstTrEnumClass(
                     decl.name,
-                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
-                    decl.members.map { AstTrStructureMember(declare(it)) }
+                    decl.parents.map { AstTrParent(declareParent(it)) },
+                    decl.members.map { AstTrMember(declare(it)) }
                 )
 
             }
             Form.OBJECT -> {
                 AstTrObject(
                     decl.name,
-                    decl.parents.map { AstTrStructureParent(declareParent(it)) },
-                    decl.members.map { AstTrStructureMember(declare(it)) }
+                    decl.parents.map { AstTrParent(declareParent(it)) },
+                    decl.members.map { AstTrMember(declare(it)) }
                 )
             }
         }.let(transpiler::format)

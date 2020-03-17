@@ -2,7 +2,7 @@ package ru.maluginp.transpiler
 
 import kastree.ast.psi.Parser
 import ru.maluginp.transpiler.convertors.ASTConvertor
-import ru.maluginp.transpiler.convertors.SwiftTranspiler
+import ru.maluginp.transpiler.swift.SwiftTranspiler
 import java.io.File
 
 class Parser {
