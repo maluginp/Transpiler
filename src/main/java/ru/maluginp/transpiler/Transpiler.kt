@@ -1,12 +1,13 @@
-package ru.maluginp.transpiler.core
+package ru.maluginp.transpiler
 
 import kastree.ast.Node
 import kastree.ast.Node.Decl.Structured.*
 import kastree.ast.Node.Modifier.Keyword.*
+import ru.maluginp.transpiler.core.*
 
-class ASTConvertor(val transpiler: Transpiler) {
+class Transpiler(val lang: TrLang) {
 
-    fun run(file: Node.File): String {
+    fun convert(file: Node.File): String {
         var output = ""
 
         output += file.pkg?.let { pkg ->
@@ -14,7 +15,7 @@ class ASTConvertor(val transpiler: Transpiler) {
                 .map { it }
                 .joinToString(separator = ".") { it }
 
-            transpiler.format(AstTrPackage(packageName))
+            lang.format(AstTrPackage(packageName))
         } ?: ""
 
         output += file.imports.map { import ->
@@ -22,7 +23,7 @@ class ASTConvertor(val transpiler: Transpiler) {
                 .map { it }
                 .joinToString(separator = ".") { it }
 
-            transpiler.format(AstTrImport(packageName))
+            lang.format(AstTrImport(packageName))
         }.joinToString(separator = "") { it }
 
 //        output += "\n"
@@ -51,15 +52,20 @@ class ASTConvertor(val transpiler: Transpiler) {
     }
 
     private fun declareTypeAlias(decl: Node.Decl.TypeAlias): String {
-        return transpiler.format(AstTrTypeAlias(
+        return lang.format(AstTrTypeAlias(
             decl.name,
             declareTypeRef(decl.type.ref),
-            decl.typeParams.map { AstTrTypeParam(it.name, declareTypeRef(it.type)) }
+            decl.typeParams.map {
+                AstTrTypeParam(
+                    it.name,
+                    declareTypeRef(it.type)
+                )
+            }
         ))
     }
 
     private fun declareInit(decl: Node.Decl.Init): String {
-        return transpiler.format(
+        return lang.format(
             AstTrInitBlock(
                 declareExprBlock(decl.block)!!
             )
@@ -67,7 +73,7 @@ class ASTConvertor(val transpiler: Transpiler) {
     }
 
     private fun declareEnum(decl: Node.Decl.EnumEntry): String {
-        return transpiler.format(AstTrEnum(
+        return lang.format(AstTrEnum(
             decl.name,
             decl.args.map { declareValueArg(it) },
             decl.members.map { AstTrMember(declare(it)) }
@@ -77,7 +83,7 @@ class ASTConvertor(val transpiler: Transpiler) {
     private fun declareModifier(decl: Node.Modifier): TrModifier {
         return when (decl) {
             is Node.Modifier.AnnotationSet -> {
-                AstTrModifier(transpiler.format(
+                AstTrModifier(lang.format(
                     AstTrAnnotationSet(
                         decl.target?.name,
                         decl.anns.map { ann ->
@@ -119,12 +125,18 @@ class ASTConvertor(val transpiler: Transpiler) {
                 CONST -> TrModifierLitKeyword.CONST
                 ACTUAL -> TrModifierLitKeyword.ACTUAL
                 EXPECT -> TrModifierLitKeyword.EXPECT
-            }.let(::AstTrModifierKeyword).let { AstTrModifier(transpiler.format(it)) }
+            }.let(::AstTrModifierKeyword).let {
+                AstTrModifier(
+                    lang.format(
+                        it
+                    )
+                )
+            }
         }
     }
 
     private fun declareFunc(decl: Node.Decl.Func): String {
-        return transpiler.format(AstTrFunc(
+        return lang.format(AstTrFunc(
             decl.name,
             decl.params.map { declareFuncParam(it) },
             declareTypeRef(decl.type?.ref),
@@ -157,13 +169,13 @@ class ASTConvertor(val transpiler: Transpiler) {
 
     private fun declareExpr(expr: Node.Expr?): String {
         return when (expr) {
-            is Node.Expr.If -> transpiler.format(AstTrIf(
+            is Node.Expr.If -> lang.format(AstTrIf(
                 declareExpr(expr.expr),
                 declareExpr(expr.body),
                 expr.elseBody?.let { declareExpr(expr.elseBody) }
             ))
             is Node.Expr.Try -> {
-                transpiler.format(
+                lang.format(
                     AstTrTry(
                         declareExprBlock(expr.block)!!,
                         expr.catches.map {
@@ -185,9 +197,15 @@ class ASTConvertor(val transpiler: Transpiler) {
                             it.name
                         )
                     }
-                transpiler.format(AstTrFor(vars, declareExpr(expr.inExpr), declareExpr(expr.body)))
+                lang.format(
+                    AstTrFor(
+                        vars,
+                        declareExpr(expr.inExpr),
+                        declareExpr(expr.body)
+                    )
+                )
             }
-            is Node.Expr.While -> transpiler.format(
+            is Node.Expr.While -> lang.format(
                 AstTrWhile(
                     declareExpr(expr.expr),
                     declareExpr(expr.body)
@@ -203,7 +221,7 @@ class ASTConvertor(val transpiler: Transpiler) {
                 }
 
 
-                return transpiler.format(
+                return lang.format(
                     AstTrBinaryOp(
                         declareExpr(expr.lhs),
                         declareExpr(expr.rhs),
@@ -211,7 +229,7 @@ class ASTConvertor(val transpiler: Transpiler) {
                     )
                 )
             }
-            is Node.Expr.UnaryOp -> transpiler.format(
+            is Node.Expr.UnaryOp -> lang.format(
                 AstTrUnaryOp(
                     expr.prefix,
                     declareExpr(expr.expr),
@@ -219,7 +237,7 @@ class ASTConvertor(val transpiler: Transpiler) {
                 )
             )
             is Node.Expr.TypeOp -> {
-                return transpiler.format(
+                return lang.format(
                     AstTrExprTypeOp(
                         declareExpr(expr.lhs),
                         expr.oper.token.str,
@@ -231,7 +249,7 @@ class ASTConvertor(val transpiler: Transpiler) {
             is Node.Expr.DoubleColonRef.Callable -> TODO()
             is Node.Expr.DoubleColonRef.Class -> TODO()
             is Node.Expr.Paren -> declareExpr(expr.expr)
-            is Node.Expr.StringTmpl -> transpiler.format(AstTrExprStringTmpl(
+            is Node.Expr.StringTmpl -> lang.format(AstTrExprStringTmpl(
                 expr.elems.map {
                     when (it) {
                         is Node.Expr.StringTmpl.Elem.Regular -> it.str
@@ -251,11 +269,11 @@ class ASTConvertor(val transpiler: Transpiler) {
 //                    Node.Expr.Const.Form.NULL -> TODO()
 //                }
 
-                return transpiler.format(AstTrExprConst(expr.value))
+                return lang.format(AstTrExprConst(expr.value))
 //                return "const ${expr.form.name} = ${expr.value}"
             }
             is Node.Expr.Brace -> {
-                return transpiler.format(
+                return lang.format(
                     AstTrExprBrace(
                         expr.params.map { param ->
                             AstTrExprBraceParam(
@@ -273,10 +291,10 @@ class ASTConvertor(val transpiler: Transpiler) {
                 )
             }
             is Node.Expr.This -> {
-                return transpiler.format(AstTrExprThis(expr.label))
+                return lang.format(AstTrExprThis(expr.label))
             }
             is Node.Expr.Super -> {
-                return transpiler.format(
+                return lang.format(
                     AstTrExprSuper(
                         declareTypeRef(expr.typeArg?.ref),
                         expr.label
@@ -284,7 +302,7 @@ class ASTConvertor(val transpiler: Transpiler) {
                 )
             }
             is Node.Expr.When -> {
-                return transpiler.format(AstTrExprWhen(
+                return lang.format(AstTrExprWhen(
                     declareExpr(expr.expr),
                     expr.entries.map { entry ->
                         AstTrExprWhenEntry(
@@ -295,35 +313,45 @@ class ASTConvertor(val transpiler: Transpiler) {
                 ))
             }
             is Node.Expr.Object -> {
-                return transpiler.format(AstTrExprObject(
+                return lang.format(AstTrExprObject(
                     expr.parents.map { AstTrParent(declareParent(it)) },
                     expr.members.map { AstTrMember(declare(it)) }
                 ))
             }
             is Node.Expr.Throw -> {
-                return transpiler.format(AstTrThrow(declareExpr(expr.expr)))
+                return lang.format(AstTrThrow(declareExpr(expr.expr)))
             }
             is Node.Expr.Return -> {
-                return transpiler.format(
+                return lang.format(
                     AstTrReturn(
                         declareExpr(expr.expr),
                         expr.label
                     )
                 )
             }
-            is Node.Expr.Continue -> transpiler.format(AstTrExprContinue(expr.label))
-            is Node.Expr.Break -> transpiler.format(AstTrExprBreak(expr.label))
-            is Node.Expr.CollLit -> transpiler.format(AstTrExprCollLit(expr.exprs.map(this::declareExpr)))
-            is Node.Expr.Name -> transpiler.format(AstTrExprName(expr.name))
+            is Node.Expr.Continue -> lang.format(AstTrExprContinue(expr.label))
+            is Node.Expr.Break -> lang.format(AstTrExprBreak(expr.label))
+            is Node.Expr.CollLit -> lang.format(
+                AstTrExprCollLit(
+                    expr.exprs.map(
+                        this::declareExpr
+                    )
+                )
+            )
+            is Node.Expr.Name -> lang.format(AstTrExprName(expr.name))
             is Node.Expr.Labeled -> {
-                return transpiler.format(
+                return lang.format(
                     AstTrExprLabeled(
                         declareExpr(expr.expr),
                         expr.label
                     )
                 )
             }
-            is Node.Expr.Annotated -> transpiler.format(AstTrExprAnnotated(declareExpr(expr)))
+            is Node.Expr.Annotated -> lang.format(
+                AstTrExprAnnotated(
+                    declareExpr(expr)
+                )
+            )
             is Node.Expr.Call -> {
                 return if (expr.lambda == null) {
                     AstTrCall(
@@ -336,25 +364,37 @@ class ASTConvertor(val transpiler: Transpiler) {
                         expr.args.map { declareValueArg(it) },
                         declareExpr(expr.lambda?.func)
                     )
-                }.let(transpiler::format)
+                }.let(lang::format)
             }
             is Node.Expr.ArrayAccess -> {
-                transpiler.format(AstTrExprArrayAccess(
+                lang.format(AstTrExprArrayAccess(
                     declareExpr(expr.expr),
                     expr.indices.map { declareExpr(it) }
                 ))
             }
             is Node.Expr.AnonFunc -> declareFunc(expr.func)
-            is Node.Expr.Property -> transpiler.format(AstTrExprProperty(declare(expr.decl)))
+            is Node.Expr.Property -> lang.format(
+                AstTrExprProperty(
+                    declare(expr.decl)
+                )
+            )
             else -> ""
         }
     }
 
     private fun declareWhenCond(cond: Node.Expr.When.Cond): TrExprWhenEntryCondition {
         return when (cond) {
-            is Node.Expr.When.Cond.Expr -> AstTrExprWhenEntryCondition(declareExpr(cond.expr))
-            is Node.Expr.When.Cond.In -> AstTrExprWhenEntryConditionIn(declareExpr(cond.expr), cond.not)
-            is Node.Expr.When.Cond.Is -> AstTrExprWhenEntryConditionIs(declareTypeRef(cond.type.ref), cond.not)
+            is Node.Expr.When.Cond.Expr -> AstTrExprWhenEntryCondition(
+                declareExpr(cond.expr)
+            )
+            is Node.Expr.When.Cond.In -> AstTrExprWhenEntryConditionIn(
+                declareExpr(cond.expr),
+                cond.not
+            )
+            is Node.Expr.When.Cond.Is -> AstTrExprWhenEntryConditionIs(
+                declareTypeRef(cond.type.ref),
+                cond.not
+            )
         }
     }
 
@@ -380,7 +420,7 @@ class ASTConvertor(val transpiler: Transpiler) {
     }
 
     private fun declareBodyBlock(body: Node.Decl.Func.Body.Block): String {
-        return transpiler.format(AstTrBlock(
+        return lang.format(AstTrBlock(
             body.block.stmts.map {
                 when (it) {
                     is Node.Stmt.Decl -> declare(it.decl)
@@ -393,13 +433,23 @@ class ASTConvertor(val transpiler: Transpiler) {
     private fun declareProperty(decl: Node.Decl.Property): String {
         // typeConstraints, accessors, mods
 
-        return transpiler.format(AstTrProperty(
-            decl.vars.filterNotNull().map { AstTrPropertyVar(declareTypeRef(it.type?.ref), it.name) },
+        return lang.format(AstTrProperty(
+            decl.vars.filterNotNull().map {
+                AstTrPropertyVar(
+                    declareTypeRef(it.type?.ref),
+                    it.name
+                )
+            },
             decl.readOnly,
             decl.delegated,
             declareExpr(decl.expr),
             declareTypeRef(decl.receiverType?.ref),
-            decl.typeParams.map { AstTrTypeParam(it.name, declareTypeRef(it.type)) }
+            decl.typeParams.map {
+                AstTrTypeParam(
+                    it.name,
+                    declareTypeRef(it.type)
+                )
+            }
         ))
     }
 
@@ -410,16 +460,21 @@ class ASTConvertor(val transpiler: Transpiler) {
                 declareTypeRef(ref.type)
             }
             is Node.TypeRef.Func -> {
-                transpiler.format(
+                lang.format(
                     AstTrTypeRefFunc(
                         declareTypeRef(ref.type.ref),
-                        ref.params.map { AstTrTypeRefFuncParam(it.name, declareTypeRef(it.type.ref)) },
+                        ref.params.map {
+                            AstTrTypeRefFuncParam(
+                                it.name,
+                                declareTypeRef(it.type.ref)
+                            )
+                        },
                         declareTypeRef(ref.receiverType?.ref)
                     )
                 )
             }
             is Node.TypeRef.Simple -> {
-                transpiler.format(
+                lang.format(
                     AstTrTypeRef(
                         ref.pieces.map { piece ->
                             AstTrTypeRefPiece(
@@ -430,10 +485,10 @@ class ASTConvertor(val transpiler: Transpiler) {
                 )
             }
             is Node.TypeRef.Nullable -> {
-                transpiler.format(AstTrTypeRefNullable(declareTypeRef(ref.type)))
+                lang.format(AstTrTypeRefNullable(declareTypeRef(ref.type)))
             }
             is Node.TypeRef.Dynamic -> {
-                transpiler.format(AstTrTypeRefDynamic())
+                lang.format(AstTrTypeRefDynamic())
             }
             null -> ""
         }
@@ -477,7 +532,7 @@ class ASTConvertor(val transpiler: Transpiler) {
                     decl.members.map { AstTrMember(declare(it)) }
                 )
             }
-        }.let(transpiler::format)
+        }.let(lang::format)
     }
 
     private fun declareParent(decl: Parent): String {

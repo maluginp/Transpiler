@@ -2,7 +2,7 @@ package ru.maluginp.transpiler.swift
 
 import ru.maluginp.transpiler.core.*
 
-class SwiftTranspiler : Transpiler {
+class SwiftLang : TrLang {
     override fun format(element: TrElement): String = when (element) {
         is TrPackage -> SwiftTrPackage(element)
         is TrImport -> SwiftTrImport(element)
