@@ -427,9 +427,73 @@ interface TrModifier: TrElement {
     val expr: String
 }
 
+enum class TrModifierLitKeyword {
+    ABSTRACT,
+    FINAL,
+    OPEN,
+    ANNOTATION,
+
+    SEALED,
+
+    DATA,
+
+    OVERRIDE,
+
+    LATEINIT,
+
+    INNER,
+
+    PRIVATE,
+
+    PROTECTED,
+
+    PUBLIC,
+
+    INTERNAL,
+
+    IN,
+
+    OUT,
+
+    NOINLINE,
+
+    CROSSINLINE,
+
+    VARARG,
+
+    REIFIED,
+
+    TAILREC,
+
+    OPERATOR,
+
+    INFIX,
+
+    INLINE,
+
+    EXTERNAL,
+
+    SUSPEND,
+
+    CONST,
+
+    ACTUAL,
+
+    EXPECT;
+}
+
 data class AstTrModifier(
     override val expr: String
 ): TrModifier
+
+
+interface TrModifierKeyword: TrElement {
+    val keyword: TrModifierLitKeyword
+}
+
+data class AstTrModifierKeyword(
+    override val keyword: TrModifierLitKeyword
+): TrModifierKeyword
 
 interface TrFuncParam: TrElement {
     val name: String
@@ -498,3 +562,139 @@ data class AstTrExprBraceParam(
     override val destructType: String?,
     override val vars: Iterable<TrPropertyVar>
 ): TrExprBraceParam
+
+interface TrAnnotationSet: TrElement {
+    val targetName: String?
+    val annotations: Iterable<TrAnnotation>
+}
+
+data class AstTrAnnotationSet(
+    override val targetName: String?,
+    override val annotations: Iterable<TrAnnotation>
+): TrAnnotationSet
+
+interface TrAnnotation: TrElement {
+    val args: Iterable<TrValueArg>
+    val names: Iterable<String>
+    val typeArgs: Iterable<String>
+}
+
+data class AstTrAnnotation(
+    override val args: Iterable<TrValueArg>,
+    override val names: Iterable<String>,
+    override val typeArgs: Iterable<String>
+): TrAnnotation
+
+
+interface TrTypeRefNullable: TrElement {
+    val type: String
+}
+
+data class AstTrTypeRefNullable(
+    override val type: String
+): TrTypeRefNullable
+
+
+interface TrTypeRefDynamic: TrElement {
+}
+
+class AstTrTypeRefDynamic: TrTypeRefDynamic
+
+
+interface TrTypeRefPiece: TrElement {
+    val name: String
+    val typeParams: Iterable<String>
+}
+interface TrTypeRef: TrElement {
+    val pieces: Iterable<TrTypeRefPiece>
+}
+
+data class AstTrTypeRef(
+    override val pieces: Iterable<TrTypeRefPiece>
+): TrTypeRef
+
+data class AstTrTypeRefPiece(
+    override val name: String,
+    override val typeParams: Iterable<String>
+): TrTypeRefPiece
+
+interface TrTypeRefFunc: TrElement {
+    val type: String
+    val params: Iterable<TrTypeRefFuncParam>
+    val receiveType: String
+}
+
+data class AstTrTypeRefFunc(
+    override val type: String,
+    override val params: Iterable<TrTypeRefFuncParam>,
+    override val receiveType: String
+): TrTypeRefFunc
+
+interface TrTypeRefFuncParam: TrElement {
+    val name: String?
+    val type: String
+}
+
+data class AstTrTypeRefFuncParam(
+    override val name: String?,
+    override val type: String
+): TrTypeRefFuncParam
+
+interface TrExprArrayAccess: TrElement {
+    val expr: String
+    val indices: Iterable<String>
+}
+
+data class AstTrExprArrayAccess(
+    override val expr: String,
+    override val indices: Iterable<String>
+): TrExprArrayAccess
+
+interface TrExprCollLit: TrElement {
+    val exprs: List<String>
+}
+
+data class AstTrExprCollLit(
+    override val exprs: List<String>
+): TrExprCollLit
+
+interface TrExprAnnotated: TrElement {
+    val expr: String
+}
+
+data class AstTrExprAnnotated(
+    override val expr: String
+): TrExprAnnotated
+
+interface TrExprStringTmpl: TrElement {
+    val elements: Iterable<String>
+}
+
+data class AstTrExprStringTmpl(
+    override val elements: Iterable<String>
+): TrExprStringTmpl
+
+interface TrTry: TrElement {
+    val block: TrBlock
+    val catches: Iterable<TrCatch>
+    val finallyBlock: TrBlock?
+}
+
+data class AstTrTry(
+    override val block: TrBlock,
+    override val catches: Iterable<TrCatch>,
+    override val finallyBlock: TrBlock?
+): TrTry
+
+
+interface TrCatch: TrElement {
+    val name: String
+    val type: String
+    val block: TrBlock
+}
+
+data class AstTrCatch(
+    override val name: String,
+    override val type: String,
+    override val block: TrBlock
+): TrCatch

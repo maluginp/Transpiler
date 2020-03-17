@@ -77,41 +77,49 @@ class ASTConvertor(val transpiler: Transpiler) {
     private fun declareModifier(decl: Node.Modifier): TrModifier {
         return when (decl) {
             is Node.Modifier.AnnotationSet -> {
-//                decl.target?.name
-                AstTrModifier("NotSupport")
+                AstTrModifier(transpiler.format(
+                    AstTrAnnotationSet(
+                        decl.target?.name,
+                        decl.anns.map { ann ->
+                            AstTrAnnotation(
+                                ann.args.map { declareValueArg(it) },
+                                ann.names,
+                                ann.typeArgs.map { declareTypeRef(it.ref) }
+                            )
+                        }
+                    )
+                ))
             }
-            is Node.Modifier.Lit -> AstTrModifier(
-                when (decl.keyword) {
-                    ABSTRACT -> "abstract"
-                    FINAL -> "final"
-                    OPEN -> "open"
-                    ANNOTATION -> "annotation"
-                    SEALED -> "sealed"
-                    DATA -> "data"
-                    OVERRIDE -> "override"
-                    LATEINIT -> TODO()
-                    INNER -> TODO()
-                    PRIVATE -> "private"
-                    PROTECTED -> "protected"
-                    PUBLIC -> "public"
-                    INTERNAL -> TODO()
-                    IN -> TODO()
-                    OUT -> TODO()
-                    NOINLINE -> TODO()
-                    CROSSINLINE -> TODO()
-                    VARARG -> TODO()
-                    REIFIED -> TODO()
-                    TAILREC -> TODO()
-                    OPERATOR -> TODO()
-                    INFIX -> TODO()
-                    INLINE -> TODO()
-                    EXTERNAL -> TODO()
-                    SUSPEND -> TODO()
-                    CONST -> "const"
-                    ACTUAL -> TODO()
-                    EXPECT -> TODO()
-                }
-            )
+            is Node.Modifier.Lit -> when (decl.keyword) {
+                ABSTRACT -> TrModifierLitKeyword.ABSTRACT
+                FINAL -> TrModifierLitKeyword.FINAL
+                OPEN -> TrModifierLitKeyword.OPEN
+                ANNOTATION -> TrModifierLitKeyword.ANNOTATION
+                SEALED -> TrModifierLitKeyword.SEALED
+                DATA -> TrModifierLitKeyword.DATA
+                OVERRIDE -> TrModifierLitKeyword.OVERRIDE
+                LATEINIT -> TrModifierLitKeyword.LATEINIT
+                INNER -> TrModifierLitKeyword.INNER
+                PRIVATE -> TrModifierLitKeyword.PRIVATE
+                PROTECTED -> TrModifierLitKeyword.PROTECTED
+                PUBLIC -> TrModifierLitKeyword.PUBLIC
+                INTERNAL -> TrModifierLitKeyword.INTERNAL
+                IN -> TrModifierLitKeyword.IN
+                OUT -> TrModifierLitKeyword.OUT
+                NOINLINE -> TrModifierLitKeyword.NOINLINE
+                CROSSINLINE -> TrModifierLitKeyword.CROSSINLINE
+                VARARG -> TrModifierLitKeyword.VARARG
+                REIFIED -> TrModifierLitKeyword.REIFIED
+                TAILREC -> TrModifierLitKeyword.TAILREC
+                OPERATOR -> TrModifierLitKeyword.OPERATOR
+                INFIX -> TrModifierLitKeyword.INFIX
+                INLINE -> TrModifierLitKeyword.INLINE
+                EXTERNAL -> TrModifierLitKeyword.EXTERNAL
+                SUSPEND -> TrModifierLitKeyword.SUSPEND
+                CONST -> TrModifierLitKeyword.CONST
+                ACTUAL -> TrModifierLitKeyword.ACTUAL
+                EXPECT -> TrModifierLitKeyword.EXPECT
+            }.let(::AstTrModifierKeyword).let { AstTrModifier(transpiler.format(it)) }
         }
     }
 
@@ -149,14 +157,26 @@ class ASTConvertor(val transpiler: Transpiler) {
 
     private fun declareExpr(expr: Node.Expr?): String {
         return when (expr) {
-            is Node.Expr.If -> {
-                transpiler.format(AstTrIf(
-                    declareExpr(expr.expr),
-                    declareExpr(expr.body),
-                    expr.elseBody?.let { declareExpr(expr.elseBody) }
-                ))
+            is Node.Expr.If -> transpiler.format(AstTrIf(
+                declareExpr(expr.expr),
+                declareExpr(expr.body),
+                expr.elseBody?.let { declareExpr(expr.elseBody) }
+            ))
+            is Node.Expr.Try -> {
+                transpiler.format(
+                    AstTrTry(
+                        declareExprBlock(expr.block)!!,
+                        expr.catches.map {
+                            AstTrCatch(
+                                it.varName,
+                                declareTypeRef(it.varType),
+                                declareExprBlock(it.block)!!
+                            )
+                        },
+                        declareExprBlock(expr.finallyBlock)
+                    )
+                )
             }
-            is Node.Expr.Try -> TODO()
             is Node.Expr.For -> {
                 val vars = expr.vars.filterNotNull()
                     .map {
@@ -167,14 +187,13 @@ class ASTConvertor(val transpiler: Transpiler) {
                     }
                 transpiler.format(AstTrFor(vars, declareExpr(expr.inExpr), declareExpr(expr.body)))
             }
-            is Node.Expr.While -> {
-                return transpiler.format(
-                    AstTrWhile(
-                        declareExpr(expr.expr),
-                        declareExpr(expr.body)
-                    )
+            is Node.Expr.While -> transpiler.format(
+                AstTrWhile(
+                    declareExpr(expr.expr),
+                    declareExpr(expr.body)
                 )
-            }
+            )
+
             is Node.Expr.BinaryOp -> {
                 val oper = expr.oper
 
@@ -192,15 +211,13 @@ class ASTConvertor(val transpiler: Transpiler) {
                     )
                 )
             }
-            is Node.Expr.UnaryOp -> {
-                return transpiler.format(
-                    AstTrUnaryOp(
-                        expr.prefix,
-                        declareExpr(expr.expr),
-                        expr.oper.token.str
-                    )
+            is Node.Expr.UnaryOp -> transpiler.format(
+                AstTrUnaryOp(
+                    expr.prefix,
+                    declareExpr(expr.expr),
+                    expr.oper.token.str
                 )
-            }
+            )
             is Node.Expr.TypeOp -> {
                 return transpiler.format(
                     AstTrExprTypeOp(
@@ -211,17 +228,11 @@ class ASTConvertor(val transpiler: Transpiler) {
                 )
 
             }
-            is Node.Expr.DoubleColonRef.Callable -> {
-                return "DoubleColonRef.Callable ${expr.name}"
-            }
-            is Node.Expr.DoubleColonRef.Class -> {
-                return "DoubleColonRef.class"
-            }
-            is Node.Expr.Paren -> {
-                return declareExpr(expr.expr)
-            }
-            is Node.Expr.StringTmpl -> {
-                return "\"" + expr.elems.map {
+            is Node.Expr.DoubleColonRef.Callable -> TODO()
+            is Node.Expr.DoubleColonRef.Class -> TODO()
+            is Node.Expr.Paren -> declareExpr(expr.expr)
+            is Node.Expr.StringTmpl -> transpiler.format(AstTrExprStringTmpl(
+                expr.elems.map {
                     when (it) {
                         is Node.Expr.StringTmpl.Elem.Regular -> it.str
                         is Node.Expr.StringTmpl.Elem.ShortTmpl -> it.str
@@ -229,8 +240,8 @@ class ASTConvertor(val transpiler: Transpiler) {
                         is Node.Expr.StringTmpl.Elem.RegularEsc -> "${it.char}"
                         is Node.Expr.StringTmpl.Elem.LongTmpl -> declareExpr(it.expr)
                     }
-                }.joinToString { it } + "\""
-            }
+                }
+            ))
             is Node.Expr.Const -> {
 //                when(expr.form) {
 //                    Node.Expr.Const.Form.BOOLEAN -> TODO()
@@ -300,16 +311,10 @@ class ASTConvertor(val transpiler: Transpiler) {
                     )
                 )
             }
-            is Node.Expr.Continue -> {
-                return transpiler.format(AstTrExprContinue(expr.label))
-            }
-            is Node.Expr.Break -> {
-                return transpiler.format(AstTrExprBreak(expr.label))
-            }
-            is Node.Expr.CollLit -> TODO()
-            is Node.Expr.Name -> {
-                return transpiler.format(AstTrExprName(expr.name))
-            }
+            is Node.Expr.Continue -> transpiler.format(AstTrExprContinue(expr.label))
+            is Node.Expr.Break -> transpiler.format(AstTrExprBreak(expr.label))
+            is Node.Expr.CollLit -> transpiler.format(AstTrExprCollLit(expr.exprs.map(this::declareExpr)))
+            is Node.Expr.Name -> transpiler.format(AstTrExprName(expr.name))
             is Node.Expr.Labeled -> {
                 return transpiler.format(
                     AstTrExprLabeled(
@@ -318,7 +323,7 @@ class ASTConvertor(val transpiler: Transpiler) {
                     )
                 )
             }
-            is Node.Expr.Annotated -> TODO()
+            is Node.Expr.Annotated -> transpiler.format(AstTrExprAnnotated(declareExpr(expr)))
             is Node.Expr.Call -> {
                 return if (expr.lambda == null) {
                     AstTrCall(
@@ -334,19 +339,13 @@ class ASTConvertor(val transpiler: Transpiler) {
                 }.let(transpiler::format)
             }
             is Node.Expr.ArrayAccess -> {
-                var text = declareExpr(expr.expr)
-                text += "["
-
-                expr.indices.map { declareExpr(it) }.joinToString(separator = ", ") { it }
-                text += "]"
-                return text
+                transpiler.format(AstTrExprArrayAccess(
+                    declareExpr(expr.expr),
+                    expr.indices.map { declareExpr(it) }
+                ))
             }
-            is Node.Expr.AnonFunc -> {
-                return ""
-            }
-            is Node.Expr.Property -> {
-                return transpiler.format(AstTrExprProperty(declare(expr.decl)))
-            }
+            is Node.Expr.AnonFunc -> declareFunc(expr.func)
+            is Node.Expr.Property -> transpiler.format(AstTrExprProperty(declare(expr.decl)))
             else -> ""
         }
     }
@@ -406,30 +405,36 @@ class ASTConvertor(val transpiler: Transpiler) {
 
     private fun declareTypeRef(ref: Node.TypeRef?): String {
         return when (ref) {
-            is Node.TypeRef.Paren -> TODO()
-            is Node.TypeRef.Func -> TODO()
+            is Node.TypeRef.Paren -> {
+                // TODO: Parent
+                declareTypeRef(ref.type)
+            }
+            is Node.TypeRef.Func -> {
+                transpiler.format(
+                    AstTrTypeRefFunc(
+                        declareTypeRef(ref.type.ref),
+                        ref.params.map { AstTrTypeRefFuncParam(it.name, declareTypeRef(it.type.ref)) },
+                        declareTypeRef(ref.receiverType?.ref)
+                    )
+                )
+            }
             is Node.TypeRef.Simple -> {
-                return ref.pieces.map {
-                    var text = it.name
-
-                    if (it.typeParams.isNotEmpty()) {
-                        text += "<"
-
-                        text += it.typeParams
-                            .map { paramRef -> declareTypeRef(paramRef?.ref) }
-                            .joinToString(separator = ", ") { paramRef -> paramRef }
-
-                        text += ">"
-                    }
-
-                    return text
-                }.joinToString(separator = "") { it }
-
+                transpiler.format(
+                    AstTrTypeRef(
+                        ref.pieces.map { piece ->
+                            AstTrTypeRefPiece(
+                                piece.name,
+                                piece.typeParams.filterNotNull().map { declareTypeRef(it.ref) }
+                            )
+                        })
+                )
             }
             is Node.TypeRef.Nullable -> {
-                "nullable ${declareTypeRef(ref.type)}"
+                transpiler.format(AstTrTypeRefNullable(declareTypeRef(ref.type)))
             }
-            is Node.TypeRef.Dynamic -> TODO()
+            is Node.TypeRef.Dynamic -> {
+                transpiler.format(AstTrTypeRefDynamic())
+            }
             null -> ""
         }
     }
