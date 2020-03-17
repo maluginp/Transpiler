@@ -5,6 +5,6 @@ import ru.maluginp.transpiler.core.TrTypeRef
 
 class SwiftTrTypeRef(private val el: TrTypeRef) : TrImplementation {
     override fun output(): String {
-        return "$el"
+        return el.pieces.joinToString(", ") { SwiftTrTypeRefPiece(it).output() }
     }
 }

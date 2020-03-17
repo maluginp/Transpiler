@@ -11,25 +11,20 @@ class SwiftTrEmpty: TrImplementation {
     override fun output(): String = ""
 }
 
-class SwiftTrInterface(private val element: TrInterface): TrImplementation {
+class SwiftTrInterface(private val el: TrInterface): TrImplementation {
     override fun output(): String {
-        var text =  "protocol ${element.name}"
+        var text =  "protocol ${el.name}"
 
-        text += element.parents.ifNotEmpty {
+        text += el.parents.ifNotEmpty {
             " : ${joinToString(separator = ", ") { SwiftTrParent(it).output() }}"
         } ?: ""
 
 
-        text += element.members.ifNotEmpty {
-            """
-                {
-                  ${joinToString(separator = "\n") { SwiftTrMember(it).output() }}
-                }
-                
-            """.trimIndent()
+        text += el.members.ifNotEmpty {
+            "{\n${joinToString(separator = "\n") { SwiftTrMember(it).output() }}\n}"
         }
 
-        return text
+        return text+"\n"
     }
 }
 
