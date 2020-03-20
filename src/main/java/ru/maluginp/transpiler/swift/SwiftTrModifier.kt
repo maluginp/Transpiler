@@ -5,6 +5,6 @@ import ru.maluginp.transpiler.core.TrModifier
 
 class SwiftTrModifier(private val el: TrModifier) : TrImplementation {
     override fun output(): String {
-        return "$el"
+        return el.expr
     }
 }

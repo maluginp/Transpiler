@@ -9,7 +9,7 @@ class SwiftTrFuncParam(private val el: TrFuncParam) : TrImplementation {
     }
 
     private fun readOnly(readOnly: Boolean?): String {
-        return readOnly?.let { if (it) "val " else "var " } ?: ""
+        return readOnly?.let { if (it) "let " else "var " } ?: ""
     }
 
     private fun default(default: String?): String {

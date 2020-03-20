@@ -46,10 +46,14 @@ interface IOrderTaxCalculator {
     fun isVAT(): Boolean
 }
 
+class IsEmpty(private val data: Any) {
+
+}
+
 
 class OrderCalculator : IOrderCalculator {
     override fun getCartItemPrice(cartItem: ICartItem): Double {
-        return getCartItemPricePerQuantity(cartItem) * cartItem.getQuantity()
+        return getCartItemPricePerQuantity(cartItem = cartItem) * cartItem.getQuantity()
     }
 
     override fun getCartItemDiscount(cartItem: ICartItem): Double {
@@ -57,7 +61,7 @@ class OrderCalculator : IOrderCalculator {
             val discount: IDiscount = cartItem.getDiscount()!!
 
             return if (discount.isPercent()) {
-                getCartItemPricePerQuantity(cartItem) * discount.getValue() * cartItem.getQuantity()
+                getCartItemPricePerQuantity(cartItem = cartItem) * discount.getValue() * cartItem.getQuantity()
             } else {
                 discount.getValue() * cartItem.getQuantity()
             }
@@ -69,7 +73,7 @@ class OrderCalculator : IOrderCalculator {
         var amount: Double = 0.0
 
         for (cartItem: ICartItem in cart.getCartItems()) {
-            amount += getCartItemPrice(cartItem)
+            amount += getCartItemPrice(cartItem = cartItem)
         }
 
         return amount
@@ -89,11 +93,11 @@ class OrderCalculator : IOrderCalculator {
         if (discount.isPercent()) {
             var amount: Double = 0.0
             if (cart.isDoubleDiscount()) {
-                amount = (getItemsSubtotal(cart) - getItemsDiscount(cart)) * discount.getValue()
+                amount = (getItemsSubtotal(cart = cart) - getItemsDiscount(cart = cart)) * discount.getValue()
             } else {
                 for (cartItem: ICartItem in cart.getCartItems()) {
                     if (cartItem.getDiscount() == null) {
-                        amount += (getCartItemPrice(cartItem) * discount.getValue())
+                        amount += (getCartItemPrice(cartItem = cartItem) * discount.getValue())
                     }
                 }
             }
@@ -118,15 +122,15 @@ class OrderCalculator : IOrderCalculator {
         return if (discount.isPercent()) {
             var amount: Double = 0.0
             if (cart.isDoubleDiscount()) {
-                amount = (getCartItemPrice(cartItem) - getCartItemDiscount(cartItem)) * discount.getValue()
+                amount = (getCartItemPrice(cartItem) - getCartItemDiscount(cartItem = cartItem)) * discount.getValue()
             } else if (cartItem.getDiscount() == null) {
                 amount = getCartItemPrice(cartItem) * discount.getValue()
             }
             amount
         } else {
-            val subtotalWithoutCartDiscount: Double = getItemsSubtotal(cart) - getItemsDiscount(cart)
+            val subtotalWithoutCartDiscount: Double = getItemsSubtotal(cart = cart) - getItemsDiscount(cart = cart)
             val discountProportion: Double = discount.getValue() / subtotalWithoutCartDiscount
-            discountProportion * (getCartItemPrice(cartItem) - getCartItemDiscount(cartItem))
+            discountProportion * (getCartItemPrice(cartItem = cartItem) - getCartItemDiscount(cartItem = cartItem))
         }
 
     }
@@ -138,7 +142,7 @@ class OrderCalculator : IOrderCalculator {
     private fun getItemsDiscount(cart: ICart): Double {
         var amount: Double = 0.0
         for (cartItem: ICartItem in cart.getCartItems()) {
-            amount += getCartItemDiscount(cartItem)
+            amount += getCartItemDiscount(cartItem = cartItem)
         }
         return amount
     }
@@ -162,7 +166,7 @@ class ExternalTaxCalculator(val orderCalculator: IOrderCalculator, val taxes: Li
         var taxAmount: Double = 0.0
 
         for (cartItem: ICartItem in cart.getCartItems()) {
-            taxAmount += getItemTax(cartItem, cart)
+            taxAmount += getItemTax(cartItem = cartItem, cart = cart)
         }
 
         return taxAmount
@@ -171,10 +175,10 @@ class ExternalTaxCalculator(val orderCalculator: IOrderCalculator, val taxes: Li
     override fun getItemTax(cartItem: ICartItem, cart: ICart): Double {
         var taxAmount: Double = 0.0
         val subtotal: Double =
-            orderCalculator.getCartItemPrice(cartItem) - orderCalculator.getCartItemDiscount(cartItem)
+            orderCalculator.getCartItemPrice(cartItem = cartItem) - orderCalculator.getCartItemDiscount(cartItem = cartItem)
 
         for (tax in taxes) {
-            if (cartItem.isTaxEnabled(tax)) {
+            if (cartItem.isTaxEnabled(tax = tax)) {
                 taxAmount += (subtotal * tax.getValue())
             }
         }
@@ -192,7 +196,7 @@ class VATTaxCalculator(val orderCalculator: IOrderCalculator, val taxes: List<IT
         var taxAmount: Double = 0.0
 
         for (cartItem: ICartItem in cart.getCartItems()) {
-            taxAmount += getItemTax(cartItem, cart)
+            taxAmount += getItemTax(cartItem = cartItem, cart = cart)
         }
 
         return taxAmount
@@ -200,7 +204,7 @@ class VATTaxCalculator(val orderCalculator: IOrderCalculator, val taxes: List<IT
 
     override fun getItemTax(cartItem: ICartItem, cart: ICart): Double {
         var taxAmount: Double = 0.0
-        val itemSubtotal: Double = getItemSubtotal(cartItem, cart)
+        val itemSubtotal: Double = getItemSubtotal(cartItem = cartItem, cart = cart)
 
         for (tax in taxes) {
             if (cartItem.isTaxEnabled(tax)) {
@@ -213,9 +217,9 @@ class VATTaxCalculator(val orderCalculator: IOrderCalculator, val taxes: List<IT
     }
 
     private fun getItemSubtotal(cartItem: ICartItem, cart: ICart): Double {
-        var subtotal: Double = orderCalculator.getCartItemPrice(cartItem)
-        subtotal -= orderCalculator.getCartItemDiscount(cartItem)
-        subtotal -= orderCalculator.getCartDiscountForEachCartItem(cartItem, cart)
+        var subtotal: Double = orderCalculator.getCartItemPrice(cartItem = cartItem)
+        subtotal -= orderCalculator.getCartItemDiscount(cartItem = cartItem)
+        subtotal -= orderCalculator.getCartDiscountForEachCartItem(cartItem = cartItem, cart = cart)
 
         subtotal /= cartItem.getQuantity()
 

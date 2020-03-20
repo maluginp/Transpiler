@@ -5,6 +5,6 @@ import ru.maluginp.transpiler.core.TrStatement
 
 class SwiftTrStatement(private val el: TrStatement) : TrImplementation {
     override fun output(): String {
-        return "$el"
+        return el.expr
     }
 }

@@ -5,6 +5,6 @@ import ru.maluginp.transpiler.core.TrImplementation
 
 class SwiftTrCall(private val el: TrCall): TrImplementation {
     override fun output(): String {
-        return "$el"
+        return "${el.expr}(${el.args.joinToString(", ") { SwiftTrValueArg(it).output() }})"
     }
 }

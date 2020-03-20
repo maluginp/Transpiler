@@ -5,6 +5,6 @@ import ru.maluginp.transpiler.core.TrModifierKeyword
 
 class SwiftTrModifierKeyword(private val el: TrModifierKeyword) : TrImplementation {
     override fun output(): String {
-        return "$el"
+        return "" //el.keyword.name
     }
 }

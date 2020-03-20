@@ -5,6 +5,6 @@ import ru.maluginp.transpiler.core.TrImplementation
 
 class SwiftTrExprName(private val el: TrExprName) : TrImplementation {
     override fun output(): String {
-        return "$el"
+        return el.name
     }
 }

@@ -5,6 +5,6 @@ import ru.maluginp.transpiler.core.TrImplementation
 
 class SwiftTrExprBrace(private val el: TrExprBrace) : TrImplementation {
     override fun output(): String {
-        return "$el"
+        return el.body?.let { SwiftTrBlock(it).output() } ?: ""
     }
 }
